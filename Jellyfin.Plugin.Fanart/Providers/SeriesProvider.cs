@@ -48,9 +48,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
         public static string ProviderName => "Fanart";
 
-        public PluginConfiguration GetOptions()
-            => Plugin.Instance.Configuration;
-
         public bool Supports(BaseItem item)
         {
             return item is Series;
@@ -286,7 +283,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             var url = string.Format(Plugin.BaseUrl, Plugin.ApiKey, tvdbId, "tv");
 
-            var clientKey = GetOptions().ApiKey;
+            var clientKey = Plugin.Instance.Configuration.ApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
             {
                 url += "&client_key=" + clientKey;
