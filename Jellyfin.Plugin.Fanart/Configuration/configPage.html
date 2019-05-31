@@ -10,9 +10,10 @@
             <div class="content-primary">
                 <form id="FanartConfigForm">
                     <div class="inputContainer">
-                        <label class="inputeLabel inputLabelUnfocused" for="apikey">API Key</label>
+                        <label class="inputeLabel inputLabelUnfocused" for="apikey">Personal API Key</label>
                         <input id="apikey" name="apikey" type="text" is="emby-input" />
                         <div class="fieldDescription">Requests to fanart without a personal API key return images that were approved over seven days ago. If you include a personal API key your queries will return images approved more than two days ago and if you are also a VIP member at Fanart that value will drop to around ten minutes.</div>
+                        <div class="fieldDescription"><a is="emby-linkbutton" class="button-link" href="https://fanart.tv/2015/01/personal-api-keys" target="_blank">${ButtonLearnMore}</a></div>
                     </div>
                     <div>
                         <button is="emby-button" type="submit" class="raised button-submit block emby-button">
@@ -30,7 +31,7 @@
             $('#FanartConfigPage').on('pageshow', function () {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(FanartConfig.pluginUniqueId).then(function (config) {
-                    $('#apikey').val(config.ApiKey).change();
+                    $('#apikey').val(config.PersonalApiKey).change();
                     Dashboard.hideLoadingMsg();
                 });
             });
@@ -38,7 +39,7 @@
             $('#FanartConfigForm').on('submit', function () {
                 Dashboard.showLoadingMsg();
                 ApiClient.getPluginConfiguration(FanartConfig.pluginUniqueId).then(function (config) {
-                    config.ApiKey = $('#apikey').val();
+                    config.PersonalApiKey = $('#apikey').val();
                     ApiClient.updatePluginConfiguration(FanartConfig.pluginUniqueId, config).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);
                     });

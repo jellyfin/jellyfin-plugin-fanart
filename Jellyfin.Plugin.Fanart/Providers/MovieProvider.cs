@@ -242,7 +242,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             var url = string.Format(Plugin.BaseUrl, Plugin.ApiKey, id, "movies");
 
-            var clientKey = Plugin.Instance.Configuration.ApiKey;
+            var clientKey = Plugin.Instance.Configuration.PersonalApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
             {
                 url += "&client_key=" + clientKey;
