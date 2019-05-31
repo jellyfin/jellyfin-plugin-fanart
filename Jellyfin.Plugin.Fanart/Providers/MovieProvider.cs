@@ -29,8 +29,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _json;
 
-        private const string BaseUrl = "https://webservice.fanart.tv/v3/movies/{1}?api_key={0}";
-
         internal static MovieProvider Current;
 
         public MovieProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
@@ -242,7 +240,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(BaseUrl, ArtistProvider.ApiKey, id);
+            var url = string.Format(Plugin.BaseUrl, Plugin.ApiKey, id, "movies");
 
             var clientKey = SeriesProvider.Current.GetOptions().ApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))

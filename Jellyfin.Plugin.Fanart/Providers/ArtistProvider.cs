@@ -24,9 +24,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
 {
     public class ArtistProvider : IRemoteImageProvider, IHasOrder
     {
-        internal const string ApiKey = "184e1a2b1fe3b94935365411f919f638";
-        private const string BaseUrl = "https://webservice.fanart.tv/v3.1/music/{1}?api_key={0}";
-
         private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClient _httpClient;
@@ -222,7 +219,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(BaseUrl, ApiKey, musicBrainzId);
+            var url = string.Format(Plugin.BaseUrl, Plugin.ApiKey, musicBrainzId, "music");
 
             var clientKey = SeriesProvider.Current.GetOptions().ApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))

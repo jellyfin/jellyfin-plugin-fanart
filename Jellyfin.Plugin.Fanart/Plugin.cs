@@ -19,6 +19,9 @@ namespace Jellyfin.Plugin.Fanart
 
         public static Plugin Instance { get; private set; }
 
+        public static string ApiKey = "184e1a2b1fe3b94935365411f919f638";
+        public static string BaseUrl = "https://webservice.fanart.tv/v3/{2}/{1}?api_key={0}";
+
         public IEnumerable<PluginPageInfo> GetPages()
         {
             return new[]
