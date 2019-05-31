@@ -19,15 +19,13 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
 using MediaBrowser.Model.Serialization;
-using MediaBrowser.Providers.TV;
-using MediaBrowser.Providers.TV.FanArt;
 
-namespace MediaBrowser.Providers.Music
+namespace Jellyfin.Plugin.Fanart.Providers
 {
-    public class FanartArtistProvider : IRemoteImageProvider, IHasOrder
+    public class ArtistProvider : IRemoteImageProvider, IHasOrder
     {
         internal const string ApiKey = "184e1a2b1fe3b94935365411f919f638";
-        private const string FanArtBaseUrl = "https://webservice.fanart.tv/v3.1/music/{1}?api_key={0}";
+        private const string BaseUrl = "https://webservice.fanart.tv/v3.1/music/{1}?api_key={0}";
 
         private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
@@ -35,9 +33,9 @@ namespace MediaBrowser.Providers.Music
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _jsonSerializer;
 
-        internal static FanartArtistProvider Current;
+        internal static ArtistProvider Current;
 
-        public FanartArtistProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
+        public ArtistProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
         {
             _config = config;
             _httpClient = httpClient;
@@ -49,7 +47,7 @@ namespace MediaBrowser.Providers.Music
 
         public string Name => ProviderName;
 
-        public static string ProviderName => "FanArt";
+        public static string ProviderName => "Fanart";
 
         public bool Supports(BaseItem item)
         {
@@ -133,7 +131,7 @@ namespace MediaBrowser.Providers.Music
         /// <param name="cancellationToken">The cancellation token.</param>
         private void AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
         {
-            var obj = _jsonSerializer.DeserializeFromFile<FanartArtistResponse>(path);
+            var obj = _jsonSerializer.DeserializeFromFile<ArtistResponse>(path);
 
             PopulateImages(list, obj.artistbackground, ImageType.Backdrop, 1920, 1080);
             PopulateImages(list, obj.artistthumb, ImageType.Primary, 500, 281);
@@ -145,7 +143,7 @@ namespace MediaBrowser.Providers.Music
         }
 
         private void PopulateImages(List<RemoteImageInfo> list,
-            List<FanartArtistImage> images,
+            List<ArtistImage> images,
             ImageType type,
             int width,
             int height)
@@ -224,9 +222,9 @@ namespace MediaBrowser.Providers.Music
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(FanArtBaseUrl, ApiKey, musicBrainzId);
+            var url = string.Format(BaseUrl, ApiKey, musicBrainzId);
 
-            var clientKey = FanartSeriesProvider.Current.GetFanartOptions().UserApiKey;
+            var clientKey = SeriesProvider.Current.GetOptions().ApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
             {
                 url += "&client_key=" + clientKey;
@@ -259,7 +257,7 @@ namespace MediaBrowser.Providers.Music
             {
                 if (ex.StatusCode.HasValue && ex.StatusCode.Value == HttpStatusCode.NotFound)
                 {
-                    _jsonSerializer.SerializeToFile(new FanartArtistResponse(), jsonPath);
+                    _jsonSerializer.SerializeToFile(new ArtistResponse(), jsonPath);
                 }
                 else
                 {
@@ -301,7 +299,7 @@ namespace MediaBrowser.Providers.Music
         }
 
 
-        public class FanartArtistImage
+        public class ArtistImage
         {
             public string id { get; set; }
             public string url { get; set; }
@@ -314,21 +312,21 @@ namespace MediaBrowser.Providers.Music
         public class Album
         {
             public string release_group_id { get; set; }
-            public List<FanartArtistImage> cdart { get; set; }
-            public List<FanartArtistImage> albumcover { get; set; }
+            public List<ArtistImage> cdart { get; set; }
+            public List<ArtistImage> albumcover { get; set; }
         }
 
-        public class FanartArtistResponse
+        public class ArtistResponse
         {
             public string name { get; set; }
             public string mbid_id { get; set; }
-            public List<FanartArtistImage> artistthumb { get; set; }
-            public List<FanartArtistImage> artistbackground { get; set; }
-            public List<FanartArtistImage> hdmusiclogo { get; set; }
-            public List<FanartArtistImage> musicbanner { get; set; }
-            public List<FanartArtistImage> musiclogo { get; set; }
-            public List<FanartArtistImage> musicarts { get; set; }
-            public List<FanartArtistImage> hdmusicarts { get; set; }
+            public List<ArtistImage> artistthumb { get; set; }
+            public List<ArtistImage> artistbackground { get; set; }
+            public List<ArtistImage> hdmusiclogo { get; set; }
+            public List<ArtistImage> musicbanner { get; set; }
+            public List<ArtistImage> musiclogo { get; set; }
+            public List<ArtistImage> musicarts { get; set; }
+            public List<ArtistImage> hdmusicarts { get; set; }
             public List<Album> albums { get; set; }
         }
     }

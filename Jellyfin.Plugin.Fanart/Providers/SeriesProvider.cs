@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.Fanart.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -20,11 +21,10 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
 using MediaBrowser.Model.Serialization;
-using MediaBrowser.Providers.Music;
 
-namespace MediaBrowser.Providers.TV.FanArt
+namespace Jellyfin.Plugin.Fanart.Providers
 {
-    public class FanartSeriesProvider : IRemoteImageProvider, IHasOrder
+    public class SeriesProvider : IRemoteImageProvider, IHasOrder
     {
         private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
@@ -32,11 +32,11 @@ namespace MediaBrowser.Providers.TV.FanArt
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _json;
 
-        private const string FanArtBaseUrl = "https://webservice.fanart.tv/v3/tv/{1}?api_key={0}";
+        private const string BaseUrl = "https://webservice.fanart.tv/v3/tv/{1}?api_key={0}";
 
-        internal static FanartSeriesProvider Current { get; private set; }
+        internal static SeriesProvider Current { get; private set; }
 
-        public FanartSeriesProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
+        public SeriesProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
         {
             _config = config;
             _httpClient = httpClient;
@@ -48,7 +48,10 @@ namespace MediaBrowser.Providers.TV.FanArt
 
         public string Name => ProviderName;
 
-        public static string ProviderName => "FanArt";
+        public static string ProviderName => "Fanart";
+
+        public PluginConfiguration GetOptions()
+            => Plugin.Instance.Configuration;
 
         public bool Supports(BaseItem item)
         {
@@ -91,7 +94,7 @@ namespace MediaBrowser.Providers.TV.FanArt
                     }
                 }
 
-                var path = GetFanartJsonPath(id);
+                var path = GetJsonPath(id);
 
                 try
                 {
@@ -239,7 +242,7 @@ namespace MediaBrowser.Providers.TV.FanArt
             return dataPath;
         }
 
-        public string GetFanartJsonPath(string tvdbId)
+        public string GetJsonPath(string tvdbId)
         {
             var dataPath = GetSeriesDataPath(_config.ApplicationPaths, tvdbId);
             return Path.Combine(dataPath, "fanart.json");
@@ -248,7 +251,7 @@ namespace MediaBrowser.Providers.TV.FanArt
         private readonly SemaphoreSlim _ensureSemaphore = new SemaphoreSlim(1, 1);
         internal async Task EnsureSeriesJson(string tvdbId, CancellationToken cancellationToken)
         {
-            var path = GetFanartJsonPath(tvdbId);
+            var path = GetJsonPath(tvdbId);
 
             // Only allow one thread in here at a time since every season will be calling this method, possibly concurrently
             await _ensureSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -273,11 +276,6 @@ namespace MediaBrowser.Providers.TV.FanArt
             }
         }
 
-        public FanartOptions GetFanartOptions()
-        {
-            return _config.GetConfiguration<FanartOptions>("fanart");
-        }
-
         /// <summary>
         /// Downloads the series json.
         /// </summary>
@@ -288,15 +286,15 @@ namespace MediaBrowser.Providers.TV.FanArt
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(FanArtBaseUrl, FanartArtistProvider.ApiKey, tvdbId);
+            var url = string.Format(BaseUrl, ArtistProvider.ApiKey, tvdbId);
 
-            var clientKey = GetFanartOptions().UserApiKey;
+            var clientKey = GetOptions().ApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
             {
                 url += "&client_key=" + clientKey;
             }
 
-            var path = GetFanartJsonPath(tvdbId);
+            var path = GetJsonPath(tvdbId);
 
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
@@ -358,21 +356,6 @@ namespace MediaBrowser.Providers.TV.FanArt
             public List<Image> characterart { get; set; }
             public List<Image> tvposter { get; set; }
             public List<Image> seasonbanner { get; set; }
-        }
-    }
-
-    public class FanartConfigStore : IConfigurationFactory
-    {
-        public IEnumerable<ConfigurationStore> GetConfigurations()
-        {
-            return new ConfigurationStore[]
-            {
-                new ConfigurationStore
-                {
-                     Key = "fanart",
-                     ConfigurationType = typeof(FanartOptions)
-                }
-            };
         }
     }
 }

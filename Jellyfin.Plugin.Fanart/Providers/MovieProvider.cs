@@ -18,13 +18,10 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
 using MediaBrowser.Model.Serialization;
-using MediaBrowser.Providers.Music;
-using MediaBrowser.Providers.TV;
-using MediaBrowser.Providers.TV.FanArt;
 
-namespace MediaBrowser.Providers.Movies
+namespace Jellyfin.Plugin.Fanart.Providers
 {
-    public class FanartMovieImageProvider : IRemoteImageProvider, IHasOrder
+    public class MovieProvider : IRemoteImageProvider, IHasOrder
     {
         private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
@@ -32,11 +29,11 @@ namespace MediaBrowser.Providers.Movies
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _json;
 
-        private const string FanArtBaseUrl = "https://webservice.fanart.tv/v3/movies/{1}?api_key={0}";
+        private const string BaseUrl = "https://webservice.fanart.tv/v3/movies/{1}?api_key={0}";
 
-        internal static FanartMovieImageProvider Current;
+        internal static MovieProvider Current;
 
-        public FanartMovieImageProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
+        public MovieProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
         {
             _config = config;
             _httpClient = httpClient;
@@ -48,7 +45,7 @@ namespace MediaBrowser.Providers.Movies
 
         public string Name => ProviderName;
 
-        public static string ProviderName => "FanArt";
+        public static string ProviderName => "Fanart";
 
         public bool Supports(BaseItem item)
         {
@@ -91,7 +88,7 @@ namespace MediaBrowser.Providers.Movies
                     }
                 }
 
-                var path = GetFanartJsonPath(movieId);
+                var path = GetJsonPath(movieId);
 
                 try
                 {
@@ -229,7 +226,7 @@ namespace MediaBrowser.Providers.Movies
             return dataPath;
         }
 
-        public string GetFanartJsonPath(string id)
+        public string GetJsonPath(string id)
         {
             var movieDataPath = GetMovieDataPath(_config.ApplicationPaths, id);
             return Path.Combine(movieDataPath, "fanart.json");
@@ -245,15 +242,15 @@ namespace MediaBrowser.Providers.Movies
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(FanArtBaseUrl, FanartArtistProvider.ApiKey, id);
+            var url = string.Format(BaseUrl, ArtistProvider.ApiKey, id);
 
-            var clientKey = FanartSeriesProvider.Current.GetFanartOptions().UserApiKey;
+            var clientKey = SeriesProvider.Current.GetOptions().ApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
             {
                 url += "&client_key=" + clientKey;
             }
 
-            var path = GetFanartJsonPath(id);
+            var path = GetJsonPath(id);
 
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
@@ -292,7 +289,7 @@ namespace MediaBrowser.Providers.Movies
 
         internal Task EnsureMovieJson(string id, CancellationToken cancellationToken)
         {
-            var path = GetFanartJsonPath(id);
+            var path = GetJsonPath(id);
 
             var fileInfo = _fileSystem.GetFileSystemInfo(path);
 

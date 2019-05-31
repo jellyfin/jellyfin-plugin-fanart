@@ -3,92 +3,100 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Entities.Audio;
+using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
 using MediaBrowser.Model.Serialization;
 
-namespace MediaBrowser.Providers.Music
+namespace Jellyfin.Plugin.Fanart.Providers
 {
-    public class FanartAlbumProvider : IRemoteImageProvider, IHasOrder
+    public class SeasonProvider : IRemoteImageProvider, IHasOrder
     {
         private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClient _httpClient;
         private readonly IFileSystem _fileSystem;
-        private readonly IJsonSerializer _jsonSerializer;
+        private readonly IJsonSerializer _json;
 
-        public FanartAlbumProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
+        public SeasonProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
         {
             _config = config;
             _httpClient = httpClient;
             _fileSystem = fileSystem;
-            _jsonSerializer = jsonSerializer;
+            _json = json;
         }
 
         public string Name => ProviderName;
 
-        public static string ProviderName => "FanArt";
+        public static string ProviderName => "Fanart";
 
         public bool Supports(BaseItem item)
         {
-            return item is MusicAlbum;
+            return item is Season;
         }
 
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
             return new List<ImageType>
             {
-                ImageType.Primary,
-                ImageType.Disc
+                ImageType.Backdrop,
+                ImageType.Thumb,
+                ImageType.Banner,
+                ImageType.Primary
             };
         }
 
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
-            var album = (MusicAlbum)item;
-
             var list = new List<RemoteImageInfo>();
 
-            var musicArtist = album.MusicArtist;
+            var season = (Season)item;
+            var series = season.Series;
 
-            if (musicArtist == null)
+            if (series != null)
             {
-                return list;
-            }
+                var id = series.GetProviderId(MetadataProviders.Tvdb);
 
-            var artistMusicBrainzId = musicArtist.GetProviderId(MetadataProviders.MusicBrainzArtist);
-
-            if (!string.IsNullOrEmpty(artistMusicBrainzId))
-            {
-                await FanartArtistProvider.Current.EnsureArtistJson(artistMusicBrainzId, cancellationToken).ConfigureAwait(false);
-
-                var artistJsonPath = FanartArtistProvider.GetArtistJsonPath(_config.CommonApplicationPaths, artistMusicBrainzId);
-
-                var musicBrainzReleaseGroupId = album.GetProviderId(MetadataProviders.MusicBrainzReleaseGroup);
-
-                var musicBrainzId = album.GetProviderId(MetadataProviders.MusicBrainzAlbum);
-
-                try
+                if (!string.IsNullOrEmpty(id) && season.IndexNumber.HasValue)
                 {
-                    AddImages(list, artistJsonPath, musicBrainzId, musicBrainzReleaseGroupId, cancellationToken);
-                }
-                catch (FileNotFoundException)
-                {
+                    // Bad id entered
+                    try
+                    {
+                        await SeriesProvider.Current.EnsureSeriesJson(id, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (HttpException ex)
+                    {
+                        if (!ex.StatusCode.HasValue || ex.StatusCode.Value != HttpStatusCode.NotFound)
+                        {
+                            throw;
+                        }
+                    }
 
-                }
-                catch (IOException)
-                {
+                    var path = SeriesProvider.Current.GetJsonPath(id);
 
+                    try
+                    {
+                        AddImages(list, season.IndexNumber.Value, path, cancellationToken);
+                    }
+                    catch (FileNotFoundException)
+                    {
+                        // No biggie. Don't blow up
+                    }
+                    catch (IOException)
+                    {
+                        // No biggie. Don't blow up
+                    }
                 }
             }
 
@@ -121,35 +129,27 @@ namespace MediaBrowser.Providers.Music
                 .ThenByDescending(i => i.VoteCount ?? 0);
         }
 
-        /// <summary>
-        /// Adds the images.
-        /// </summary>
-        /// <param name="list">The list.</param>
-        /// <param name="path">The path.</param>
-        /// <param name="releaseId">The release identifier.</param>
-        /// <param name="releaseGroupId">The release group identifier.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        private void AddImages(List<RemoteImageInfo> list, string path, string releaseId, string releaseGroupId, CancellationToken cancellationToken)
+        private void AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
         {
-            var obj = _jsonSerializer.DeserializeFromFile<FanartArtistProvider.FanartArtistResponse>(path);
+            var root = _json.DeserializeFromFile<SeriesProvider.RootObject>(path);
 
-            if (obj.albums != null)
-            {
-                var album = obj.albums.FirstOrDefault(i => string.Equals(i.release_group_id, releaseGroupId, StringComparison.OrdinalIgnoreCase));
+            AddImages(list, root, seasonNumber, cancellationToken);
+        }
 
-                if (album != null)
-                {
-                    PopulateImages(list, album.albumcover, ImageType.Primary, 1000, 1000);
-                    PopulateImages(list, album.cdart, ImageType.Disc, 1000, 1000);
-                }
-            }
+        private void AddImages(List<RemoteImageInfo> list, SeriesProvider.RootObject obj, int seasonNumber, CancellationToken cancellationToken)
+        {
+            PopulateImages(list, obj.seasonposter, ImageType.Primary, 1000, 1426, seasonNumber);
+            PopulateImages(list, obj.seasonbanner, ImageType.Banner, 1000, 185, seasonNumber);
+            PopulateImages(list, obj.seasonthumb, ImageType.Thumb, 500, 281, seasonNumber);
+            PopulateImages(list, obj.showbackground, ImageType.Backdrop, 1920, 1080, seasonNumber);
         }
 
         private void PopulateImages(List<RemoteImageInfo> list,
-            List<FanartArtistProvider.FanartArtistImage> images,
+            List<SeriesProvider.Image> images,
             ImageType type,
             int width,
-            int height)
+            int height,
+            int seasonNumber)
         {
             if (images == null)
             {
@@ -159,8 +159,12 @@ namespace MediaBrowser.Providers.Music
             list.AddRange(images.Select(i =>
             {
                 var url = i.url;
+                var season = i.season;
 
-                if (!string.IsNullOrEmpty(url))
+                if (!string.IsNullOrEmpty(url) &&
+                    !string.IsNullOrEmpty(season) &&
+                    int.TryParse(season, NumberStyles.Integer, _usCulture, out var imageSeasonNumber) &&
+                    seasonNumber == imageSeasonNumber)
                 {
                     var likesString = i.likes;
 
@@ -186,7 +190,7 @@ namespace MediaBrowser.Providers.Music
                 return null;
             }).Where(i => i != null));
         }
-        // After embedded provider
+
         public int Order => 1;
 
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
