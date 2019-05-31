@@ -1,16 +1,14 @@
 ---
-name: "jellyfin-plugin-template"
-guid: "eb5d7894-8eef-4b36-aa6f-5d124e828ce1"
+name: "jellyfin-plugin-fanart"
+guid: "170a157f-ac6c-437a-abdd-ca9c25cebd39"
 version: "1.0.0"
-nicename: "Template"
-description: "Short description about your plugin"
-overview: >
-  This is a longer description that can span more than one
-  line and include details about your plugin.
-category: "General"
+nicename: "Fanart"
+description: "Scrape poster images from fanart.tv"
+overview: "Scrape poster images for movies, shows, and artists in your library."
+category: "Metadata"
 owner: "jellyfin"
 artifacts:
-  - "Jellyfin.Plugin.Template.dll"
+  - "Jellyfin.Plugin.Fanart.dll"
 build_type: "dotnet"
 dotnet_configuration: "Release"
 dotnet_framework: "netstandard2.0"
