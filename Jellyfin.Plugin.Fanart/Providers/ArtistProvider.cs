@@ -24,13 +24,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
 {
     public class ArtistProvider : IRemoteImageProvider, IHasOrder
     {
-        private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClient _httpClient;
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _jsonSerializer;
-
-        internal static ArtistProvider Current;
 
         public ArtistProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
         {
@@ -42,15 +39,19 @@ namespace Jellyfin.Plugin.Fanart.Providers
             Current = this;
         }
 
-        public string Name => ProviderName;
+        internal static ArtistProvider Current { get; private set; }
 
-        public static string ProviderName => "Fanart";
+        /// <inheritdoc />
+        public string Name => "Fanart";
 
+        /// <inheritdoc />
+        public int Order => 0;
+
+        /// <inheritdoc />
         public bool Supports(BaseItem item)
-        {
-            return item is MusicArtist;
-        }
+            => item is MusicArtist;
 
+        /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
             return new List<ImageType>
@@ -63,6 +64,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             };
         }
 
+        /// <inheritdoc />
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
             var artist = (MusicArtist)item;
@@ -103,6 +105,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     {
                         return 3;
                     }
+
                     if (!isLanguageEn)
                     {
                         if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
@@ -110,10 +113,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
                             return 2;
                         }
                     }
+
                     if (string.IsNullOrEmpty(i.Language))
                     {
                         return isLanguageEn ? 3 : 2;
                     }
+
                     return 0;
                 })
                 .ThenByDescending(i => i.CommunityRating ?? 0)
@@ -139,7 +144,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
             PopulateImages(list, obj.musicarts, ImageType.Art, 500, 281);
         }
 
-        private void PopulateImages(List<RemoteImageInfo> list,
+        private void PopulateImages(
+            List<RemoteImageInfo> list,
             List<ArtistImage> images,
             ImageType type,
             int width,
@@ -169,7 +175,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Language = i.lang
                     };
 
-                    if (!string.IsNullOrEmpty(likesString) && int.TryParse(likesString, NumberStyles.Integer, _usCulture, out var likes))
+                    if (!string.IsNullOrEmpty(likesString)
+                        && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
                     }
@@ -181,8 +188,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             }).Where(i => i != null));
         }
 
-        public int Order => 0;
-
+        /// <inheritdoc />
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClient.GetResponse(new HttpRequestOptions
@@ -198,12 +204,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             var fileInfo = _fileSystem.GetFileSystemInfo(jsonPath);
 
-            if (fileInfo.Exists)
+            if (fileInfo.Exists
+                && (DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 2)
             {
-                if ((DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 2)
-                {
-                    return Task.CompletedTask;
-                }
+                return Task.CompletedTask;
             }
 
             return DownloadArtistJson(musicBrainzId, cancellationToken);
@@ -219,7 +223,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(Plugin.BaseUrl, Plugin.ApiKey, musicBrainzId, "music");
+            var url = string.Format(
+                CultureInfo.InvariantCulture,
+                Plugin.BaseUrl,
+                Plugin.ApiKey,
+                musicBrainzId,
+                "music");
 
             var clientKey = Plugin.Instance.Configuration.PersonalApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
@@ -233,21 +242,19 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             try
             {
-                using (var httpResponse = await _httpClient.SendAsync(new HttpRequestOptions
-                {
-                    Url = url,
-                    CancellationToken = cancellationToken,
-                    BufferContent = true
-
-                }, "GET").ConfigureAwait(false))
-                {
-                    using (var response = httpResponse.Content)
+                using (var httpResponse = await _httpClient.SendAsync(
+                    new HttpRequestOptions
                     {
-                        using (var saveFileStream = _fileSystem.GetFileStream(jsonPath, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, true))
-                        {
-                            await response.CopyToAsync(saveFileStream).ConfigureAwait(false);
-                        }
-                    }
+                        Url = url,
+                        CancellationToken = cancellationToken,
+                        BufferContent = true
+
+                    },
+                    "GET").ConfigureAwait(false))
+                using (var response = httpResponse.Content)
+                using (var saveFileStream = _fileSystem.GetFileStream(jsonPath, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, true))
+                {
+                    await response.CopyToAsync(saveFileStream).ConfigureAwait(false);
                 }
             }
             catch (HttpException ex)
@@ -295,35 +302,50 @@ namespace Jellyfin.Plugin.Fanart.Providers
             return Path.Combine(dataPath, "fanart.json");
         }
 
-
         public class ArtistImage
         {
             public string id { get; set; }
+
             public string url { get; set; }
+
             public string likes { get; set; }
+
             public string disc { get; set; }
+
             public string size { get; set; }
+
             public string lang { get; set; }
         }
 
         public class Album
         {
             public string release_group_id { get; set; }
+
             public List<ArtistImage> cdart { get; set; }
+
             public List<ArtistImage> albumcover { get; set; }
         }
 
         public class ArtistResponse
         {
             public string name { get; set; }
+
             public string mbid_id { get; set; }
+
             public List<ArtistImage> artistthumb { get; set; }
+
             public List<ArtistImage> artistbackground { get; set; }
+
             public List<ArtistImage> hdmusiclogo { get; set; }
+
             public List<ArtistImage> musicbanner { get; set; }
+
             public List<ArtistImage> musiclogo { get; set; }
+
             public List<ArtistImage> musicarts { get; set; }
+
             public List<ArtistImage> hdmusicarts { get; set; }
+
             public List<Album> albums { get; set; }
         }
     }

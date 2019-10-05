@@ -13,7 +13,6 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
-using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
 using MediaBrowser.Model.Serialization;
 
@@ -21,29 +20,28 @@ namespace Jellyfin.Plugin.Fanart.Providers
 {
     public class AlbumProvider : IRemoteImageProvider, IHasOrder
     {
-        private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClient _httpClient;
-        private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _jsonSerializer;
 
-        public AlbumProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
+        public AlbumProvider(IServerConfigurationManager config, IHttpClient httpClient, IJsonSerializer jsonSerializer)
         {
             _config = config;
             _httpClient = httpClient;
-            _fileSystem = fileSystem;
             _jsonSerializer = jsonSerializer;
         }
 
-        public string Name => ProviderName;
+        /// <inheritdoc />
+        public string Name => "Fanart";
 
-        public static string ProviderName => "Fanart";
+        /// <inheritdoc />
+        public int Order => 1; // After embedded provider
 
+        /// <inheritdoc />
         public bool Supports(BaseItem item)
-        {
-            return item is MusicAlbum;
-        }
+            => item is MusicAlbum;
 
+        /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
             return new List<ImageType>
@@ -53,6 +51,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             };
         }
 
+        /// <inheritdoc />
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
             var album = (MusicAlbum)item;
@@ -104,6 +103,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     {
                         return 3;
                     }
+
                     if (!isLanguageEn)
                     {
                         if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
@@ -111,10 +111,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
                             return 2;
                         }
                     }
+
                     if (string.IsNullOrEmpty(i.Language))
                     {
                         return isLanguageEn ? 3 : 2;
                     }
+
                     return 0;
                 })
                 .ThenByDescending(i => i.CommunityRating ?? 0)
@@ -145,7 +147,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
             }
         }
 
-        private void PopulateImages(List<RemoteImageInfo> list,
+        private void PopulateImages(
+            List<RemoteImageInfo> list,
             List<ArtistProvider.ArtistImage> images,
             ImageType type,
             int width,
@@ -175,7 +178,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Language = i.lang
                     };
 
-                    if (!string.IsNullOrEmpty(likesString) && int.TryParse(likesString, NumberStyles.Integer, _usCulture, out var likes))
+                    if (!string.IsNullOrEmpty(likesString)
+                        && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
                     }
@@ -186,9 +190,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 return null;
             }).Where(i => i != null));
         }
-        // After embedded provider
-        public int Order => 1;
 
+        /// <inheritdoc />
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClient.GetResponse(new HttpRequestOptions

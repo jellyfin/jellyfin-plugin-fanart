@@ -7,14 +7,12 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
-using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
-using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
 using MediaBrowser.Model.Serialization;
@@ -23,29 +21,26 @@ namespace Jellyfin.Plugin.Fanart.Providers
 {
     public class SeasonProvider : IRemoteImageProvider, IHasOrder
     {
-        private readonly CultureInfo _usCulture = new CultureInfo("en-US");
-        private readonly IServerConfigurationManager _config;
         private readonly IHttpClient _httpClient;
-        private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _json;
 
-        public SeasonProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
+        public SeasonProvider(IHttpClient httpClient, IJsonSerializer json)
         {
-            _config = config;
             _httpClient = httpClient;
-            _fileSystem = fileSystem;
             _json = json;
         }
 
-        public string Name => ProviderName;
+        /// <inheritdoc />
+        public string Name => "Fanart";
 
-        public static string ProviderName => "Fanart";
+        /// <inheritdoc />
+        public int Order => 1;
 
+        /// <inheritdoc />
         public bool Supports(BaseItem item)
-        {
-            return item is Season;
-        }
+            => item is Season;
 
+        /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
             return new List<ImageType>
@@ -57,6 +52,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             };
         }
 
+        /// <inheritdoc />
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
             var list = new List<RemoteImageInfo>();
@@ -112,6 +108,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     {
                         return 3;
                     }
+
                     if (!isLanguageEn)
                     {
                         if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
@@ -119,10 +116,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
                             return 2;
                         }
                     }
+
                     if (string.IsNullOrEmpty(i.Language))
                     {
                         return isLanguageEn ? 3 : 2;
                     }
+
                     return 0;
                 })
                 .ThenByDescending(i => i.CommunityRating ?? 0)
@@ -144,7 +143,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
             PopulateImages(list, obj.showbackground, ImageType.Backdrop, 1920, 1080, seasonNumber);
         }
 
-        private void PopulateImages(List<RemoteImageInfo> list,
+        private void PopulateImages(
+            List<RemoteImageInfo> list,
             List<SeriesProvider.Image> images,
             ImageType type,
             int width,
@@ -161,10 +161,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 var url = i.url;
                 var season = i.season;
 
-                if (!string.IsNullOrEmpty(url) &&
-                    !string.IsNullOrEmpty(season) &&
-                    int.TryParse(season, NumberStyles.Integer, _usCulture, out var imageSeasonNumber) &&
-                    seasonNumber == imageSeasonNumber)
+                if (!string.IsNullOrEmpty(url)
+                    && !string.IsNullOrEmpty(season)
+                    && int.TryParse(season, NumberStyles.Integer, CultureInfo.InvariantCulture, out var imageSeasonNumber)
+                    && seasonNumber == imageSeasonNumber)
                 {
                     var likesString = i.likes;
 
@@ -179,7 +179,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Language = i.lang
                     };
 
-                    if (!string.IsNullOrEmpty(likesString) && int.TryParse(likesString, NumberStyles.Integer, _usCulture, out var likes))
+                    if (!string.IsNullOrEmpty(likesString)
+                        && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
                     }
@@ -191,8 +192,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             }).Where(i => i != null));
         }
 
-        public int Order => 1;
-
+        /// <inheritdoc />
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClient.GetResponse(new HttpRequestOptions
