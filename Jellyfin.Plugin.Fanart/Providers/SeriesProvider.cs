@@ -6,14 +6,12 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.Fanart.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
@@ -26,13 +24,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
 {
     public class SeriesProvider : IRemoteImageProvider, IHasOrder
     {
-        private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClient _httpClient;
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _json;
 
-        internal static SeriesProvider Current { get; private set; }
+        private readonly SemaphoreSlim _ensureSemaphore = new SemaphoreSlim(1, 1);
 
         public SeriesProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
         {
@@ -44,15 +41,19 @@ namespace Jellyfin.Plugin.Fanart.Providers
             Current = this;
         }
 
-        public string Name => ProviderName;
+        internal static SeriesProvider Current { get; private set; }
 
-        public static string ProviderName => "Fanart";
+        /// <inheritdoc />
+        public string Name => "Fanart";
 
+        /// <inheritdoc />
+        public int Order => 1;
+
+        /// <inheritdoc />
         public bool Supports(BaseItem item)
-        {
-            return item is Series;
-        }
+            => item is Series;
 
+        /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
             return new List<ImageType>
@@ -66,6 +67,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             };
         }
 
+        /// <inheritdoc />
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
             var list = new List<RemoteImageInfo>();
@@ -93,7 +95,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                 try
                 {
-                    AddImages(list, path, cancellationToken);
+                    AddImages(list, path);
                 }
                 catch (FileNotFoundException)
                 {
@@ -117,6 +119,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     {
                         return 3;
                     }
+
                     if (!isLanguageEn)
                     {
                         if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
@@ -124,24 +127,26 @@ namespace Jellyfin.Plugin.Fanart.Providers
                             return 2;
                         }
                     }
+
                     if (string.IsNullOrEmpty(i.Language))
                     {
                         return isLanguageEn ? 3 : 2;
                     }
+
                     return 0;
                 })
                 .ThenByDescending(i => i.CommunityRating ?? 0)
                 .ThenByDescending(i => i.VoteCount ?? 0);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
+        private void AddImages(List<RemoteImageInfo> list, string path)
         {
             var root = _json.DeserializeFromFile<RootObject>(path);
 
-            AddImages(list, root, cancellationToken);
+            AddImages(list, root);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, RootObject obj, CancellationToken cancellationToken)
+        private void AddImages(List<RemoteImageInfo> list, RootObject obj)
         {
             PopulateImages(list, obj.hdtvlogo, ImageType.Logo, 800, 310);
             PopulateImages(list, obj.hdclearart, ImageType.Art, 1000, 562);
@@ -154,7 +159,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
             PopulateImages(list, obj.tvposter, ImageType.Primary, 1000, 1426);
         }
 
-        private void PopulateImages(List<RemoteImageInfo> list,
+        private void PopulateImages(
+            List<RemoteImageInfo> list,
             List<Image> images,
             ImageType type,
             int width,
@@ -189,7 +195,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Language = i.lang
                     };
 
-                    if (!string.IsNullOrEmpty(likesString) && int.TryParse(likesString, NumberStyles.Integer, _usCulture, out var likes))
+                    if (!string.IsNullOrEmpty(likesString)
+                        && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
                     }
@@ -201,8 +208,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             }).Where(i => i != null));
         }
 
-        public int Order => 1;
-
+        /// <inheritdoc />
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClient.GetResponse(new HttpRequestOptions
@@ -243,7 +249,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
             return Path.Combine(dataPath, "fanart.json");
         }
 
-        private readonly SemaphoreSlim _ensureSemaphore = new SemaphoreSlim(1, 1);
         internal async Task EnsureSeriesJson(string tvdbId, CancellationToken cancellationToken)
         {
             var path = GetJsonPath(tvdbId);
@@ -281,7 +286,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(Plugin.BaseUrl, Plugin.ApiKey, tvdbId, "tv");
+            var url = string.Format(
+                CultureInfo.InvariantCulture,
+                Plugin.BaseUrl,
+                Plugin.ApiKey,
+                tvdbId,
+                "tv");
 
             var clientKey = Plugin.Instance.Configuration.PersonalApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
@@ -295,21 +305,19 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             try
             {
-                using (var httpResponse = await _httpClient.SendAsync(new HttpRequestOptions
-                {
-                    Url = url,
-                    CancellationToken = cancellationToken,
-                    BufferContent = true
-
-                }, "GET").ConfigureAwait(false))
-                {
-                    using (var response = httpResponse.Content)
+                using (var httpResponse = await _httpClient.SendAsync(
+                    new HttpRequestOptions
                     {
-                        using (var fileStream = _fileSystem.GetFileStream(path, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, true))
-                        {
-                            await response.CopyToAsync(fileStream).ConfigureAwait(false);
-                        }
-                    }
+                        Url = url,
+                        CancellationToken = cancellationToken,
+                        BufferContent = true
+
+                    },
+                    "GET").ConfigureAwait(false))
+                using (var response = httpResponse.Content)
+                using (var fileStream = _fileSystem.GetFileStream(path, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, true))
+                {
+                    await response.CopyToAsync(fileStream).ConfigureAwait(false);
                 }
             }
             catch (HttpException exception)
@@ -329,27 +337,44 @@ namespace Jellyfin.Plugin.Fanart.Providers
         public class Image
         {
             public string id { get; set; }
+
             public string url { get; set; }
+
             public string lang { get; set; }
+
             public string likes { get; set; }
+
             public string season { get; set; }
         }
 
         public class RootObject
         {
             public string name { get; set; }
+
             public string thetvdb_id { get; set; }
+
             public List<Image> clearlogo { get; set; }
+
             public List<Image> hdtvlogo { get; set; }
+
             public List<Image> clearart { get; set; }
+
             public List<Image> showbackground { get; set; }
+
             public List<Image> tvthumb { get; set; }
+
             public List<Image> seasonposter { get; set; }
+
             public List<Image> seasonthumb { get; set; }
+
             public List<Image> hdclearart { get; set; }
+
             public List<Image> tvbanner { get; set; }
+
             public List<Image> characterart { get; set; }
+
             public List<Image> tvposter { get; set; }
+
             public List<Image> seasonbanner { get; set; }
         }
     }

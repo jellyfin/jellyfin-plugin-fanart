@@ -23,13 +23,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
 {
     public class MovieProvider : IRemoteImageProvider, IHasOrder
     {
-        private readonly CultureInfo _usCulture = new CultureInfo("en-US");
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClient _httpClient;
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _json;
-
-        internal static MovieProvider Current;
 
         public MovieProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
         {
@@ -37,19 +34,19 @@ namespace Jellyfin.Plugin.Fanart.Providers
             _httpClient = httpClient;
             _fileSystem = fileSystem;
             _json = json;
-
-            Current = this;
         }
 
-        public string Name => ProviderName;
+        /// <inheritdoc />
+        public string Name => "Fanart";
 
-        public static string ProviderName => "Fanart";
+        /// <inheritdoc />
+        public int Order => 1;
 
+        /// <inheritdoc />
         public bool Supports(BaseItem item)
-        {
-            return item is Movie || item is BoxSet || item is MusicVideo;
-        }
+            => item is Movie || item is BoxSet || item is MusicVideo;
 
+        /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
             return new List<ImageType>
@@ -64,6 +61,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             };
         }
 
+        /// <inheritdoc />
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
             var baseItem = item;
@@ -90,7 +88,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                 try
                 {
-                    AddImages(list, path, cancellationToken);
+                    AddImages(list, path);
                 }
                 catch (FileNotFoundException)
                 {
@@ -114,6 +112,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     {
                         return 3;
                     }
+
                     if (!isLanguageEn)
                     {
                         if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
@@ -121,23 +120,25 @@ namespace Jellyfin.Plugin.Fanart.Providers
                             return 2;
                         }
                     }
+
                     if (string.IsNullOrEmpty(i.Language))
                     {
                         return isLanguageEn ? 3 : 2;
                     }
+
                     return 0;
                 })
                 .ThenByDescending(i => i.CommunityRating ?? 0);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
+        private void AddImages(List<RemoteImageInfo> list, string path)
         {
             var root = _json.DeserializeFromFile<RootObject>(path);
 
-            AddImages(list, root, cancellationToken);
+            AddImages(list, root);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, RootObject obj, CancellationToken cancellationToken)
+        private void AddImages(List<RemoteImageInfo> list, RootObject obj)
         {
             PopulateImages(list, obj.hdmovieclearart, ImageType.Art, 1000, 562);
             PopulateImages(list, obj.hdmovielogo, ImageType.Logo, 800, 310);
@@ -176,7 +177,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Language = i.lang
                     };
 
-                    if (!string.IsNullOrEmpty(likesString) && int.TryParse(likesString, NumberStyles.Integer, _usCulture, out var likes))
+                    if (!string.IsNullOrEmpty(likesString)
+                        && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
                     }
@@ -188,8 +190,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             }).Where(i => i != null));
         }
 
-        public int Order => 1;
-
+        /// <inheritdoc />
         public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
         {
             return _httpClient.GetResponse(new HttpRequestOptions
@@ -224,7 +225,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             return dataPath;
         }
 
-        public string GetJsonPath(string id)
+        private string GetJsonPath(string id)
         {
             var movieDataPath = GetMovieDataPath(_config.ApplicationPaths, id);
             return Path.Combine(movieDataPath, "fanart.json");
@@ -240,7 +241,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var url = string.Format(Plugin.BaseUrl, Plugin.ApiKey, id, "movies");
+            var url = string.Format(
+                CultureInfo.InvariantCulture,
+                Plugin.BaseUrl,
+                Plugin.ApiKey,
+                id,
+                "movies");
 
             var clientKey = Plugin.Instance.Configuration.PersonalApiKey;
             if (!string.IsNullOrWhiteSpace(clientKey))
@@ -254,21 +260,19 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             try
             {
-                using (var httpResponse = await _httpClient.SendAsync(new HttpRequestOptions
-                {
-                    Url = url,
-                    CancellationToken = cancellationToken,
-                    BufferContent = true
-
-                }, "GET").ConfigureAwait(false))
-                {
-                    using (var response = httpResponse.Content)
+                using (var httpResponse = await _httpClient.SendAsync(
+                    new HttpRequestOptions
                     {
-                        using (var fileStream = _fileSystem.GetFileStream(path, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, true))
-                        {
-                            await response.CopyToAsync(fileStream).ConfigureAwait(false);
-                        }
-                    }
+                        Url = url,
+                        CancellationToken = cancellationToken,
+                        BufferContent = true
+
+                    },
+                    "GET").ConfigureAwait(false))
+                using (var response = httpResponse.Content)
+                using (var fileStream = _fileSystem.GetFileStream(path, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, true))
+                {
+                    await response.CopyToAsync(fileStream).ConfigureAwait(false);
                 }
             }
             catch (HttpException exception)
@@ -291,12 +295,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             var fileInfo = _fileSystem.GetFileSystemInfo(path);
 
-            if (fileInfo.Exists)
+            if (fileInfo.Exists
+                && (DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 2)
             {
-                if ((DateTime.UtcNow - _fileSystem.GetLastWriteTimeUtc(fileInfo)).TotalDays <= 2)
-                {
-                    return Task.CompletedTask;
-                }
+                return Task.CompletedTask;
             }
 
             return DownloadMovieJson(id, cancellationToken);
@@ -305,24 +307,38 @@ namespace Jellyfin.Plugin.Fanart.Providers
         public class Image
         {
             public string id { get; set; }
+
             public string url { get; set; }
+
             public string lang { get; set; }
+
             public string likes { get; set; }
         }
 
         public class RootObject
         {
             public string name { get; set; }
+
             public string tmdb_id { get; set; }
+
             public string imdb_id { get; set; }
+
             public List<Image> hdmovielogo { get; set; }
+
             public List<Image> moviedisc { get; set; }
+
             public List<Image> movielogo { get; set; }
+
             public List<Image> movieposter { get; set; }
+
             public List<Image> hdmovieclearart { get; set; }
+
             public List<Image> movieart { get; set; }
+
             public List<Image> moviebackground { get; set; }
+
             public List<Image> moviebanner { get; set; }
+
             public List<Image> moviethumb { get; set; }
         }
     }
