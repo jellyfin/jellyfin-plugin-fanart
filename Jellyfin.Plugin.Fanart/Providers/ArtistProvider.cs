@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Configuration;
@@ -250,9 +251,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         BufferContent = true
 
                     },
-                    "GET").ConfigureAwait(false))
+                    HttpMethod.Get).ConfigureAwait(false))
                 using (var response = httpResponse.Content)
-                using (var saveFileStream = _fileSystem.GetFileStream(jsonPath, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, true))
+                using (var saveFileStream = new FileStream(jsonPath, FileMode.Create, FileAccess.Write, FileShare.Read, StreamDefaults.DefaultFileStreamBufferSize, true))
                 {
                     await response.CopyToAsync(saveFileStream).ConfigureAwait(false);
                 }
