@@ -3,7 +3,7 @@
 
 ## About
 
-The Jellyfin Fanart plugin allows you to get images for your Movies and T.V Shows from <a href="https://fanart.tv/">Fanart.</a>
+The Jellyfin Fanart plugin allows you to get images for your Movies and TV Shows from <a href="https://fanart.tv/">Fanart.</a>
 
 
 ## Build & Installation Process
