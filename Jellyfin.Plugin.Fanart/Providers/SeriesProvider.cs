@@ -317,7 +317,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     },
                     HttpMethod.Get).ConfigureAwait(false))
                 using (var response = httpResponse.Content)
-                using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, PluginConfiguration.DefaultBufferSize, FileOptions.Asynchronous))
+                using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
                 {
                     await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
                 }
