@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.Fanart.Configuration;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -253,9 +254,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     },
                     HttpMethod.Get).ConfigureAwait(false))
                 using (var response = httpResponse.Content)
-                using (var saveFileStream = new FileStream(jsonPath, FileMode.Create, FileAccess.Write, FileShare.Read, StreamDefaults.DefaultFileStreamBufferSize, true))
+                using (var saveFileStream = new FileStream(jsonPath, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
                 {
-                    await response.CopyToAsync(saveFileStream).ConfigureAwait(false);
+                    await response.CopyToAsync(saveFileStream, CancellationToken.None).ConfigureAwait(false);
                 }
             }
             catch (HttpException ex)
