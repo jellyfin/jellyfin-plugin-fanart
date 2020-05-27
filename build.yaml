@@ -1,15 +1,13 @@
 ---
-name: "jellyfin-plugin-fanart"
+name: "Fanart"
 guid: "170a157f-ac6c-437a-abdd-ca9c25cebd39"
-version: "4"
-jellyfin_version: "10.5.0"
-nicename: "Fanart"
-description: "Scrape poster images from fanart.tv"
-overview: "Scrape poster images for movies, shows, and artists in your library."
+version: "4.0.0.0"
+targetAbi: "10.5.0.0"
+overview: "Scrape poster images from Fanart"
+description: "Scrape poster images for movies, shows, and artists in your library."
 category: "Metadata"
 owner: "jellyfin"
 artifacts:
-  - "Jellyfin.Plugin.Fanart.dll"
-build_type: "dotnet"
-dotnet_configuration: "Release"
-dotnet_framework: "netstandard2.1"
+- "Jellyfin.Plugin.Fanart.dll"
+changelog: >
+  changelog
