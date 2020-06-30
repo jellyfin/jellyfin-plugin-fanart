@@ -65,7 +65,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 return list;
             }
 
-            var artistMusicBrainzId = musicArtist.GetProviderId(MetadataProviders.MusicBrainzArtist);
+            var artistMusicBrainzId = musicArtist.GetProviderId(MetadataProvider.MusicBrainzArtist);
 
             if (!string.IsNullOrEmpty(artistMusicBrainzId))
             {
@@ -73,9 +73,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                 var artistJsonPath = ArtistProvider.GetArtistJsonPath(_config.CommonApplicationPaths, artistMusicBrainzId);
 
-                var musicBrainzReleaseGroupId = album.GetProviderId(MetadataProviders.MusicBrainzReleaseGroup);
+                var musicBrainzReleaseGroupId = album.GetProviderId(MetadataProvider.MusicBrainzReleaseGroup);
 
-                var musicBrainzId = album.GetProviderId(MetadataProviders.MusicBrainzAlbum);
+                var musicBrainzId = album.GetProviderId(MetadataProvider.MusicBrainzAlbum);
 
                 try
                 {

@@ -73,7 +73,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             var list = new List<RemoteImageInfo>();
 
-            var artistMusicBrainzId = artist.GetProviderId(MetadataProviders.MusicBrainzArtist);
+            var artistMusicBrainzId = artist.GetProviderId(MetadataProvider.MusicBrainzArtist);
 
             if (!string.IsNullOrEmpty(artistMusicBrainzId))
             {
