@@ -62,7 +62,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             if (series != null)
             {
-                var id = series.GetProviderId(MetadataProviders.Tvdb);
+                var id = series.GetProviderId(MetadataProvider.Tvdb);
 
                 if (!string.IsNullOrEmpty(id) && season.IndexNumber.HasValue)
                 {

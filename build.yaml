@@ -1,8 +1,8 @@
 ---
 name: "Fanart"
 guid: "170a157f-ac6c-437a-abdd-ca9c25cebd39"
-version: "4.0.0.0"
-targetAbi: "10.5.0.0"
+version: "5.0.0.0"
+targetAbi: "10.6.0.0"
 overview: "Scrape poster images from Fanart"
 description: "Scrape poster images for movies, shows, and artists in your library."
 category: "Metadata"

@@ -76,7 +76,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             var series = (Series)item;
 
-            var id = series.GetProviderId(MetadataProviders.Tvdb);
+            var id = series.GetProviderId(MetadataProvider.Tvdb);
 
             if (!string.IsNullOrEmpty(id))
             {

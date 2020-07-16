@@ -69,7 +69,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             var baseItem = item;
             var list = new List<RemoteImageInfo>();
 
-            var movieId = baseItem.GetProviderId(MetadataProviders.Tmdb);
+            var movieId = baseItem.GetProviderId(MetadataProvider.Tmdb);
 
             if (!string.IsNullOrEmpty(movieId))
             {
