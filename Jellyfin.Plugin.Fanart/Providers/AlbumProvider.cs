@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
@@ -21,13 +22,13 @@ namespace Jellyfin.Plugin.Fanart.Providers
     public class AlbumProvider : IRemoteImageProvider, IHasOrder
     {
         private readonly IServerConfigurationManager _config;
-        private readonly IHttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IJsonSerializer _jsonSerializer;
 
-        public AlbumProvider(IServerConfigurationManager config, IHttpClient httpClient, IJsonSerializer jsonSerializer)
+        public AlbumProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IJsonSerializer jsonSerializer)
         {
             _config = config;
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
             _jsonSerializer = jsonSerializer;
         }
 
@@ -192,13 +193,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
         }
 
         /// <inheritdoc />
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
+        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClient.GetResponse(new HttpRequestOptions
-            {
-                CancellationToken = cancellationToken,
-                Url = url
-            });
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
     }
 }

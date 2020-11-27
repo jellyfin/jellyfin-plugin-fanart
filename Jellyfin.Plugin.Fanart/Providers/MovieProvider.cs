@@ -26,14 +26,14 @@ namespace Jellyfin.Plugin.Fanart.Providers
     public class MovieProvider : IRemoteImageProvider, IHasOrder
     {
         private readonly IServerConfigurationManager _config;
-        private readonly IHttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _json;
 
-        public MovieProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer json)
+        public MovieProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem, IJsonSerializer json)
         {
             _config = config;
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
             _fileSystem = fileSystem;
             _json = json;
         }
@@ -78,7 +78,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 {
                     await EnsureMovieJson(movieId, cancellationToken).ConfigureAwait(false);
                 }
-                catch (HttpException ex)
+                catch (HttpRequestException ex)
                 {
                     if (!ex.StatusCode.HasValue || ex.StatusCode.Value != HttpStatusCode.NotFound)
                     {
@@ -193,13 +193,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
         }
 
         /// <inheritdoc />
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
+        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClient.GetResponse(new HttpRequestOptions
-            {
-                CancellationToken = cancellationToken,
-                Url = url
-            });
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
         /// <summary>
@@ -262,22 +258,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             try
             {
-                using (var httpResponse = await _httpClient.SendAsync(
-                    new HttpRequestOptions
-                    {
-                        Url = url,
-                        CancellationToken = cancellationToken,
-                        BufferContent = true
-
-                    },
-                    HttpMethod.Get).ConfigureAwait(false))
+                var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
+                using (var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false))
                 using (var response = httpResponse.Content)
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
                 {
                     await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
                 }
             }
-            catch (HttpException exception)
+            catch (HttpRequestException exception)
             {
                 if (exception.StatusCode.HasValue && exception.StatusCode.Value == HttpStatusCode.NotFound)
                 {
