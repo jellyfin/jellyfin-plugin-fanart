@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Net;
@@ -21,12 +22,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
 {
     public class SeasonProvider : IRemoteImageProvider, IHasOrder
     {
-        private readonly IHttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IJsonSerializer _json;
 
-        public SeasonProvider(IHttpClient httpClient, IJsonSerializer json)
+        public SeasonProvider(IHttpClientFactory httpClientFactory, IJsonSerializer json)
         {
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
             _json = json;
         }
 
@@ -71,7 +72,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     {
                         await SeriesProvider.Current.EnsureSeriesJson(id, cancellationToken).ConfigureAwait(false);
                     }
-                    catch (HttpException ex)
+                    catch (HttpRequestException ex)
                     {
                         if (!ex.StatusCode.HasValue || ex.StatusCode.Value != HttpStatusCode.NotFound)
                         {
@@ -193,13 +194,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
         }
 
         /// <inheritdoc />
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
+        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClient.GetResponse(new HttpRequestOptions
-            {
-                CancellationToken = cancellationToken,
-                Url = url
-            });
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
     }
 }

@@ -27,14 +27,14 @@ namespace Jellyfin.Plugin.Fanart.Providers
     public class ArtistProvider : IRemoteImageProvider, IHasOrder
     {
         private readonly IServerConfigurationManager _config;
-        private readonly IHttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IFileSystem _fileSystem;
         private readonly IJsonSerializer _jsonSerializer;
 
-        public ArtistProvider(IServerConfigurationManager config, IHttpClient httpClient, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
+        public ArtistProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
         {
             _config = config;
-            _httpClient = httpClient;
+            _httpClientFactory = httpClientFactory;
             _fileSystem = fileSystem;
             _jsonSerializer = jsonSerializer;
 
@@ -191,13 +191,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
         }
 
         /// <inheritdoc />
-        public Task<HttpResponseInfo> GetImageResponse(string url, CancellationToken cancellationToken)
+        public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            return _httpClient.GetResponse(new HttpRequestOptions
-            {
-                CancellationToken = cancellationToken,
-                Url = url
-            });
+            return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
         }
 
         internal Task EnsureArtistJson(string musicBrainzId, CancellationToken cancellationToken)
@@ -244,22 +240,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             try
             {
-                using (var httpResponse = await _httpClient.SendAsync(
-                    new HttpRequestOptions
-                    {
-                        Url = url,
-                        CancellationToken = cancellationToken,
-                        BufferContent = true
-
-                    },
-                    HttpMethod.Get).ConfigureAwait(false))
+                var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
+                using (var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false))
                 using (var response = httpResponse.Content)
                 using (var saveFileStream = new FileStream(jsonPath, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
                 {
                     await response.CopyToAsync(saveFileStream, CancellationToken.None).ConfigureAwait(false);
                 }
             }
-            catch (HttpException ex)
+            catch (HttpRequestException ex)
             {
                 if (ex.StatusCode.HasValue && ex.StatusCode.Value == HttpStatusCode.NotFound)
                 {
