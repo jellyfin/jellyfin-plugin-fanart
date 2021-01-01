@@ -5,8 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Common.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -23,12 +25,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
     public class SeasonProvider : IRemoteImageProvider, IHasOrder
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IJsonSerializer _json;
 
-        public SeasonProvider(IHttpClientFactory httpClientFactory, IJsonSerializer json)
+        public SeasonProvider(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
-            _json = json;
         }
 
         /// <inheritdoc />
@@ -84,7 +84,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                     try
                     {
-                        AddImages(list, season.IndexNumber.Value, path, cancellationToken);
+                        await AddImages(list, season.IndexNumber.Value, path, cancellationToken).ConfigureAwait(false);
                     }
                     catch (FileNotFoundException)
                     {
@@ -129,9 +129,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 .ThenByDescending(i => i.VoteCount ?? 0);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
+        private async Task AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
         {
-            var root = _json.DeserializeFromFile<SeriesProvider.RootObject>(path);
+            Stream fileStream = File.OpenRead(path);
+            var root = await JsonSerializer.DeserializeAsync<SeriesProvider.RootObject>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
 
             AddImages(list, root, seasonNumber, cancellationToken);
         }
