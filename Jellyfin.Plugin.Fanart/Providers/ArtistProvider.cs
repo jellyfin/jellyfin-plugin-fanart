@@ -5,10 +5,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.Fanart.Configuration;
 using MediaBrowser.Common.Configuration;
+using MediaBrowser.Common.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -29,14 +31,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IFileSystem _fileSystem;
-        private readonly IJsonSerializer _jsonSerializer;
 
-        public ArtistProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem, IJsonSerializer jsonSerializer)
+        public ArtistProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem)
         {
             _config = config;
             _httpClientFactory = httpClientFactory;
             _fileSystem = fileSystem;
-            _jsonSerializer = jsonSerializer;
 
             Current = this;
         }
@@ -83,7 +83,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                 try
                 {
-                    AddImages(list, artistJsonPath, cancellationToken);
+                    await AddImages(list, artistJsonPath, cancellationToken);
                 }
                 catch (FileNotFoundException)
                 {
@@ -133,9 +133,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <param name="list">The list.</param>
         /// <param name="path">The path.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        private void AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
+        private async Task AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
         {
-            var obj = _jsonSerializer.DeserializeFromFile<ArtistResponse>(path);
+            Stream fileStream = File.OpenRead(path);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
 
             PopulateImages(list, obj.artistbackground, ImageType.Backdrop, 1920, 1080);
             PopulateImages(list, obj.artistthumb, ImageType.Primary, 500, 281);
@@ -252,7 +253,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
             {
                 if (ex.StatusCode.HasValue && ex.StatusCode.Value == HttpStatusCode.NotFound)
                 {
-                    _jsonSerializer.SerializeToFile(new ArtistResponse(), jsonPath);
+                    Stream fileStream = File.OpenWrite(jsonPath);
+                    await JsonSerializer.SerializeAsync(fileStream, new ArtistResponse(), JsonDefaults.GetOptions()).ConfigureAwait(false);
                 }
                 else
                 {

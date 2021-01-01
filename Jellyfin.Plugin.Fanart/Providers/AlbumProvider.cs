@@ -4,8 +4,10 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Common.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -13,9 +15,7 @@ using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.Providers;
-using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Providers
 {
@@ -23,13 +23,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
     {
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IJsonSerializer _jsonSerializer;
 
-        public AlbumProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IJsonSerializer jsonSerializer)
+        public AlbumProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory)
         {
             _config = config;
             _httpClientFactory = httpClientFactory;
-            _jsonSerializer = jsonSerializer;
         }
 
         /// <inheritdoc />
@@ -80,7 +78,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                 try
                 {
-                    AddImages(list, artistJsonPath, musicBrainzId, musicBrainzReleaseGroupId, cancellationToken);
+                    await AddImages(list, artistJsonPath, musicBrainzId, musicBrainzReleaseGroupId, cancellationToken).ConfigureAwait(false);
                 }
                 catch (FileNotFoundException)
                 {
@@ -132,9 +130,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <param name="releaseId">The release identifier.</param>
         /// <param name="releaseGroupId">The release group identifier.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        private void AddImages(List<RemoteImageInfo> list, string path, string releaseId, string releaseGroupId, CancellationToken cancellationToken)
+        private async Task AddImages(List<RemoteImageInfo> list, string path, string releaseId, string releaseGroupId, CancellationToken cancellationToken)
         {
-            var obj = _jsonSerializer.DeserializeFromFile<ArtistProvider.ArtistResponse>(path);
+            Stream fileStream = File.OpenRead(path);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistProvider.ArtistResponse>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
 
             if (obj.albums != null)
             {

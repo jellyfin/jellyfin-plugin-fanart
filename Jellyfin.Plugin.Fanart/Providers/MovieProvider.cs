@@ -5,10 +5,11 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.Fanart.Configuration;
 using MediaBrowser.Common.Configuration;
+using MediaBrowser.Common.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -17,7 +18,6 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
-using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
 using MediaBrowser.Model.Serialization;
 
@@ -28,14 +28,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private readonly IServerConfigurationManager _config;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IFileSystem _fileSystem;
-        private readonly IJsonSerializer _json;
 
-        public MovieProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem, IJsonSerializer json)
+        public MovieProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem)
         {
             _config = config;
             _httpClientFactory = httpClientFactory;
             _fileSystem = fileSystem;
-            _json = json;
         }
 
         /// <inheritdoc />
@@ -90,7 +88,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                 try
                 {
-                    AddImages(list, path);
+                    await AddImages(list, path).ConfigureAwait(false);
                 }
                 catch (FileNotFoundException)
                 {
@@ -133,9 +131,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 .ThenByDescending(i => i.CommunityRating ?? 0);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, string path)
+        private async Task AddImages(List<RemoteImageInfo> list, string path)
         {
-            var root = _json.DeserializeFromFile<RootObject>(path);
+            Stream fileStream = File.OpenRead(path);
+            var root = await JsonSerializer.DeserializeAsync<RootObject>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
 
             AddImages(list, root);
         }
@@ -271,7 +270,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (exception.StatusCode.HasValue && exception.StatusCode.Value == HttpStatusCode.NotFound)
                 {
                     // If the user has automatic updates enabled, save a dummy object to prevent repeated download attempts
-                    _json.SerializeToFile(new RootObject(), path);
+                    Stream fileStream = File.OpenWrite(path);
+                    await JsonSerializer.SerializeAsync(fileStream, new RootObject(), JsonDefaults.GetOptions()).ConfigureAwait(false);
 
                     return;
                 }
