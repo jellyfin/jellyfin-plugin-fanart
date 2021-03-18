@@ -2,7 +2,7 @@
 <h3 align="center">Part of the <a href="https://jellyfin.org/">Jellyfin Project</a></h3>
 
 <p align="center">
-<img alt="Logo Banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>
+<img alt="Plugin Banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/plugins/SVG/jellyfin-plugin-fanart.svg?sanitize=true"/>
 <br/>
 <br/>
 <a href="https://github.com/jellyfin/jellyfin-plugin-fanart/actions?query=workflow%3A%22Test+Build+Plugin%22">
@@ -17,19 +17,29 @@
 </p>
 
 ## About
+This plugin allows you to get images for your Movies and TV Shows from [Fanart](https://fanart.tv/).
 
-The Jellyfin Fanart plugin allows you to get images for your Movies and TV Shows from <a href="https://fanart.tv/">Fanart.</a>
+## Build
 
-## Build & Installation Process
+1. To build this plugin you will need [.Net 5.x](https://dotnet.microsoft.com/download/dotnet/5.0).
 
-1. Clone this repository
+2. Build plugin with following command
+  ```
+  dotnet publish --configuration Release --output bin
+  ```
 
-2. Ensure you have .NET Core SDK set up and installed
+3. Place the dll-file in the `plugins/fanart` folder (you might need to create the folders) of your JF install
 
-3. Build the plugin with your favorite IDE or the `dotnet` command:
+## Releasing
 
-```
-dotnet publish --configuration Release --output bin
-```
+To release the plugin we recommend [JPRM](https://github.com/oddstr13/jellyfin-plugin-repository-manager) that will build and package the plugin.
+For additional context and for how to add the packaged plugin zip to a plugin manifest see the [JPRM documentation](https://github.com/oddstr13/jellyfin-plugin-repository-manager) for more info.
 
-4. Place the resulting `Jellyfin.Plugin.Fanart.dll` file in a folder called `plugins/` inside your Jellyfin data directory
+## Contributing
+
+We welcome all contributions and pull requests! If you have a larger feature in mind please open an issue so we can discuss the implementation before you start.
+In general refer to our [contributing guidelines](https://github.com/jellyfin/.github/blob/master/CONTRIBUTING.md) for further information.
+
+## Licence
+
+This plugins code and packages are distributed under the MIT License. See [LICENSE](./LICENSE) for more information.
