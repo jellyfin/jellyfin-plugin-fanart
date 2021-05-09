@@ -19,6 +19,10 @@
 ## About
 This plugin allows you to get images for your Movies and TV Shows from [Fanart](https://fanart.tv/).
 
+## Installation
+
+[See the official documentation for install instructions](https://jellyfin.org/docs/general/server/plugins/index.html#installing).
+
 ## Build
 
 1. To build this plugin you will need [.Net 5.x](https://dotnet.microsoft.com/download/dotnet/5.0).
