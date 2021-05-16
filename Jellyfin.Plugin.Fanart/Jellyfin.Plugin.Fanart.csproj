@@ -14,8 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Configuration\configPage.html" />
-    <EmbeddedResource Include="Configuration\configPage.html" />
+    <None Remove="Web\fanart.html" />
+    <None Remove="Web\fanart.js" />
+    <EmbeddedResource Include="Web\fanart.html" />
+    <EmbeddedResource Include="Web\fanart.js" />
   </ItemGroup>
 
 </Project>

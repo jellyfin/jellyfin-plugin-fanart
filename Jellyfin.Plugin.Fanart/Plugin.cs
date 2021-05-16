@@ -35,8 +35,13 @@ namespace Jellyfin.Plugin.Fanart
             {
                 new PluginPageInfo
                 {
-                    Name = this.Name,
-                    EmbeddedResourcePath = string.Format("{0}.Configuration.configPage.html", GetType().Namespace)
+                    Name = "fanart",
+                    EmbeddedResourcePath = GetType().Namespace + ".Web.fanart.html",
+                },
+                new PluginPageInfo
+                {
+                    Name = "fanartjs",
+                    EmbeddedResourcePath = GetType().Namespace + ".Web.fanart.js"
                 }
             };
         }
