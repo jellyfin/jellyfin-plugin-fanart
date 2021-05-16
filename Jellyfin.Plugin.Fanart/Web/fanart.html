@@ -1,0 +1,20 @@
+<div id="FanartConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-controller="__plugin/fanartjs">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="FanartConfigForm">
+                <div class="inputContainer">
+                    <input is="emby-input" type="text" id="apikey" name="apikey" label="Personal API Key" />
+                    <div class="fieldDescription">Requests to fanart without a personal API key return images that were approved over seven days ago. If you include a personal API key your queries will return images approved more than two days ago and if you are also a VIP member at Fanart that value will drop to around ten minutes.</div>
+                    <div class="fieldDescription">
+                        <a is="emby-linkbutton" class="button-link" href="https://fanart.tv/2015/01/personal-api-keys" target="_blank">${ButtonLearnMore}</a>
+                    </div>
+                </div>
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block">
+                        <span>${Save}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
