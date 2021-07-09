@@ -1,5 +1,5 @@
 # Automates creation of Release Drafts using Release Drafter
-name: Update Release Draft & Create Release Bump PR
+name: Update Release Draft
 
 on:
   push:
