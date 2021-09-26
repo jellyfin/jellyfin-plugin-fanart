@@ -8,8 +8,8 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Extensions.Json;
 using MediaBrowser.Common.Configuration;
-using MediaBrowser.Common.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -19,7 +19,6 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
-using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Providers
 {
@@ -134,7 +133,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<RootObject>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<RootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             AddImages(list, root);
         }
@@ -271,7 +270,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 {
                     // If the user has automatic updates enabled, save a dummy object to prevent repeated download attempts
                     Stream fileStream = File.OpenWrite(path);
-                    await JsonSerializer.SerializeAsync(fileStream, new RootObject(), JsonDefaults.GetOptions()).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new RootObject(), JsonDefaults.Options).ConfigureAwait(false);
 
                     return;
                 }

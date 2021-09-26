@@ -8,9 +8,8 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.Fanart.Configuration;
+using Jellyfin.Extensions.Json;
 using MediaBrowser.Common.Configuration;
-using MediaBrowser.Common.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -18,11 +17,8 @@ using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.IO;
-using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
-using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Providers
 {
@@ -136,7 +132,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             PopulateImages(list, obj.artistbackground, ImageType.Backdrop, 1920, 1080);
             PopulateImages(list, obj.artistthumb, ImageType.Primary, 500, 281);
@@ -254,7 +250,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (ex.StatusCode.HasValue && ex.StatusCode.Value == HttpStatusCode.NotFound)
                 {
                     Stream fileStream = File.OpenWrite(jsonPath);
-                    await JsonSerializer.SerializeAsync(fileStream, new ArtistResponse(), JsonDefaults.GetOptions()).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new ArtistResponse(), JsonDefaults.Options).ConfigureAwait(false);
                 }
                 else
                 {

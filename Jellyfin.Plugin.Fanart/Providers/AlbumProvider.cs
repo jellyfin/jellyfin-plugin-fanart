@@ -7,7 +7,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaBrowser.Common.Json;
+using Jellyfin.Extensions.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -133,7 +133,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path, string releaseId, string releaseGroupId, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var obj = await JsonSerializer.DeserializeAsync<ArtistProvider.ArtistResponse>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistProvider.ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             if (obj.albums != null)
             {
