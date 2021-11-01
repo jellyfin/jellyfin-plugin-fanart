@@ -8,17 +8,14 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaBrowser.Common.Json;
+using Jellyfin.Extensions.Json;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.Extensions;
-using MediaBrowser.Model.Net;
 using MediaBrowser.Model.Providers;
-using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Providers
 {
@@ -132,7 +129,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<SeriesProvider.RootObject>(fileStream, JsonDefaults.GetOptions()).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<SeriesProvider.RootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             AddImages(list, root, seasonNumber, cancellationToken);
         }
