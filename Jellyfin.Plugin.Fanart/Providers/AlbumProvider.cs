@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -57,28 +58,26 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             var list = new List<RemoteImageInfo>();
 
-            var musicArtist = album.MusicArtist;
+            var musicBrainzAlbumArtist = album.GetProviderId(MetadataProvider.MusicBrainzAlbumArtist);
 
-            if (musicArtist == null)
+            if (musicBrainzAlbumArtist == null)
             {
                 return list;
             }
 
-            var artistMusicBrainzId = musicArtist.GetProviderId(MetadataProvider.MusicBrainzArtist);
-
-            if (!string.IsNullOrEmpty(artistMusicBrainzId))
+            if (!string.IsNullOrEmpty(musicBrainzAlbumArtist))
             {
-                await ArtistProvider.Current.EnsureArtistJson(artistMusicBrainzId, cancellationToken).ConfigureAwait(false);
+                await ArtistProvider.Current.EnsureArtistJson(musicBrainzAlbumArtist, cancellationToken).ConfigureAwait(false);
 
-                var artistJsonPath = ArtistProvider.GetArtistJsonPath(_config.CommonApplicationPaths, artistMusicBrainzId);
+                var artistJsonPath = ArtistProvider.GetArtistJsonPath(_config.CommonApplicationPaths, musicBrainzAlbumArtist);
 
-                var musicBrainzReleaseGroupId = album.GetProviderId(MetadataProvider.MusicBrainzReleaseGroup);
+                var musicBrainzReleaseGroup = album.GetProviderId(MetadataProvider.MusicBrainzReleaseGroup);
 
-                var musicBrainzId = album.GetProviderId(MetadataProvider.MusicBrainzAlbum);
+                var musicBrainzAlbum = album.GetProviderId(MetadataProvider.MusicBrainzAlbum);
 
                 try
                 {
-                    await AddImages(list, artistJsonPath, musicBrainzId, musicBrainzReleaseGroupId, cancellationToken).ConfigureAwait(false);
+                    await AddImages(list, artistJsonPath, musicBrainzAlbum, musicBrainzReleaseGroup, cancellationToken).ConfigureAwait(false);
                 }
                 catch (FileNotFoundException)
                 {
@@ -133,23 +132,29 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path, string releaseId, string releaseGroupId, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var obj = await JsonSerializer.DeserializeAsync<ArtistProvider.ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             if (obj.albums != null)
             {
-                var album = obj.albums.FirstOrDefault(i => string.Equals(i.release_group_id, releaseGroupId, StringComparison.OrdinalIgnoreCase));
+                var album = obj.albums.FirstOrDefault(i => (string.Equals(i.Key, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Key, releaseGroupId, StringComparison.OrdinalIgnoreCase)));
+                var albumcover = album.Value.albumcover;
+                var cdart = album.Value.cdart;
 
-                if (album != null)
+                if ( albumcover != null)
                 {
-                    PopulateImages(list, album.albumcover, ImageType.Primary, 1000, 1000);
-                    PopulateImages(list, album.cdart, ImageType.Disc, 1000, 1000);
+                    PopulateImages(list, albumcover, ImageType.Primary, 1000, 1000);
+                }
+
+                if (cdart != null)
+                {
+                    PopulateImages(list, cdart, ImageType.Disc, 1000, 1000);
                 }
             }
         }
 
         private void PopulateImages(
             List<RemoteImageInfo> list,
-            List<ArtistProvider.ArtistImage> images,
+            List<ArtistImage> images,
             ImageType type,
             int width,
             int height)

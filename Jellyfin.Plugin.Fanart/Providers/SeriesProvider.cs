@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -140,12 +141,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<RootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             AddImages(list, root);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, RootObject obj)
+        private void AddImages(List<RemoteImageInfo> list, SeriesRootObject obj)
         {
             PopulateImages(list, obj.hdtvlogo, ImageType.Logo, 800, 310);
             PopulateImages(list, obj.hdclearart, ImageType.Art, 1000, 562);
@@ -160,7 +161,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
         private void PopulateImages(
             List<RemoteImageInfo> list,
-            List<Image> images,
+            List<SeriesImage> images,
             ImageType type,
             int width,
             int height,
@@ -314,57 +315,13 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 {
                     // If the user has automatic updates enabled, save a dummy object to prevent repeated download attempts
                     Stream fileStream = File.OpenWrite(path);
-                    await JsonSerializer.SerializeAsync(fileStream, new RootObject(), JsonDefaults.Options).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new SeriesRootObject(), JsonDefaults.Options).ConfigureAwait(false);
 
                     return;
                 }
 
                 throw;
             }
-        }
-
-        public class Image
-        {
-            public string id { get; set; }
-
-            public string url { get; set; }
-
-            public string lang { get; set; }
-
-            public string likes { get; set; }
-
-            public string season { get; set; }
-        }
-
-        public class RootObject
-        {
-            public string name { get; set; }
-
-            public string thetvdb_id { get; set; }
-
-            public List<Image> clearlogo { get; set; }
-
-            public List<Image> hdtvlogo { get; set; }
-
-            public List<Image> clearart { get; set; }
-
-            public List<Image> showbackground { get; set; }
-
-            public List<Image> tvthumb { get; set; }
-
-            public List<Image> seasonposter { get; set; }
-
-            public List<Image> seasonthumb { get; set; }
-
-            public List<Image> hdclearart { get; set; }
-
-            public List<Image> tvbanner { get; set; }
-
-            public List<Image> characterart { get; set; }
-
-            public List<Image> tvposter { get; set; }
-
-            public List<Image> seasonbanner { get; set; }
         }
     }
 }

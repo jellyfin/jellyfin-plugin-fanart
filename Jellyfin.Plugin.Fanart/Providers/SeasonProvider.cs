@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -129,12 +130,12 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<SeriesProvider.RootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             AddImages(list, root, seasonNumber, cancellationToken);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, SeriesProvider.RootObject obj, int seasonNumber, CancellationToken cancellationToken)
+        private void AddImages(List<RemoteImageInfo> list, SeriesRootObject obj, int seasonNumber, CancellationToken cancellationToken)
         {
             PopulateImages(list, obj.seasonposter, ImageType.Primary, 1000, 1426, seasonNumber);
             PopulateImages(list, obj.seasonbanner, ImageType.Banner, 1000, 185, seasonNumber);
@@ -144,7 +145,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
         private void PopulateImages(
             List<RemoteImageInfo> list,
-            List<SeriesProvider.Image> images,
+            List<SeriesImage> images,
             ImageType type,
             int width,
             int height,

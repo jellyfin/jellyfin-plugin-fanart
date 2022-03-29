@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -289,53 +290,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
             var dataPath = GetArtistDataPath(appPaths, musicBrainzArtistId);
 
             return Path.Combine(dataPath, "fanart.json");
-        }
-
-        public class ArtistImage
-        {
-            public string id { get; set; }
-
-            public string url { get; set; }
-
-            public string likes { get; set; }
-
-            public string disc { get; set; }
-
-            public string size { get; set; }
-
-            public string lang { get; set; }
-        }
-
-        public class Album
-        {
-            public string release_group_id { get; set; }
-
-            public List<ArtistImage> cdart { get; set; }
-
-            public List<ArtistImage> albumcover { get; set; }
-        }
-
-        public class ArtistResponse
-        {
-            public string name { get; set; }
-
-            public string mbid_id { get; set; }
-
-            public List<ArtistImage> artistthumb { get; set; }
-
-            public List<ArtistImage> artistbackground { get; set; }
-
-            public List<ArtistImage> hdmusiclogo { get; set; }
-
-            public List<ArtistImage> musicbanner { get; set; }
-
-            public List<ArtistImage> musiclogo { get; set; }
-
-            public List<ArtistImage> musicarts { get; set; }
-
-            public List<ArtistImage> hdmusicarts { get; set; }
-
-            public List<Album> albums { get; set; }
         }
     }
 }
