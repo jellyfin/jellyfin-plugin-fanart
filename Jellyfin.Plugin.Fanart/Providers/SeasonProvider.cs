@@ -57,9 +57,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
             var list = new List<RemoteImageInfo>();
 
             var season = (Season)item;
-            var series = season.Series;
 
-            if (series != null)
+            if (season != null)
             {
                 var id = season.GetProviderId(MetadataProvider.Tmdb) ?? season.GetProviderId(MetadataProvider.Tvdb);
 
