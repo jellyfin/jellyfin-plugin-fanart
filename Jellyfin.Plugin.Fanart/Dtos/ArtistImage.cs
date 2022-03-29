@@ -1,17 +1,25 @@
+using System.Text.Json.Serialization;
+
 namespace Jellyfin.Plugin.Fanart.Dtos
 {
     public class ArtistImage
     {
-        public string id { get; set; }
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
 
-        public string url { get; set; }
+        [JsonPropertyName("url")]
+        public string Url { get; set; }
 
-        public string likes { get; set; }
+        [JsonPropertyName("likes")]
+        public string Likes { get; set; }
 
-        public string disc { get; set; }
+        [JsonPropertyName("disc")]
+        public string Disc { get; set; }
 
-        public string size { get; set; }
+        [JsonPropertyName("size")]
+        public string Size { get; set; }
 
-        public string lang { get; set; }
+        [JsonPropertyName("lang")]
+        public string Language { get; set; }
     }
 }

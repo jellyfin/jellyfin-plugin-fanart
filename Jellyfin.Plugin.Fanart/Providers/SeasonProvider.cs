@@ -137,10 +137,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
         private void AddImages(List<RemoteImageInfo> list, SeriesRootObject obj, int seasonNumber, CancellationToken cancellationToken)
         {
-            PopulateImages(list, obj.seasonposter, ImageType.Primary, 1000, 1426, seasonNumber);
-            PopulateImages(list, obj.seasonbanner, ImageType.Banner, 1000, 185, seasonNumber);
-            PopulateImages(list, obj.seasonthumb, ImageType.Thumb, 500, 281, seasonNumber);
-            PopulateImages(list, obj.showbackground, ImageType.Backdrop, 1920, 1080, seasonNumber);
+            PopulateImages(list, obj.SeasonPosters, ImageType.Primary, 1000, 1426, seasonNumber);
+            PopulateImages(list, obj.SeasonBanners, ImageType.Banner, 1000, 185, seasonNumber);
+            PopulateImages(list, obj.SeasonThumbs, ImageType.Thumb, 500, 281, seasonNumber);
+            PopulateImages(list, obj.Showbackgrounds, ImageType.Backdrop, 1920, 1080, seasonNumber);
         }
 
         private void PopulateImages(
@@ -158,15 +158,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
-                var season = i.season;
+                var url = i.Url;
+                var season = i.Season;
 
                 if (!string.IsNullOrEmpty(url)
                     && !string.IsNullOrEmpty(season)
                     && int.TryParse(season, NumberStyles.Integer, CultureInfo.InvariantCulture, out var imageSeasonNumber)
                     && seasonNumber == imageSeasonNumber)
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -176,7 +176,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)

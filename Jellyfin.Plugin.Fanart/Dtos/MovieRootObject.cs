@@ -1,31 +1,44 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Dtos
 {
     public class MovieRootObject
     {
-        public string name { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
 
-        public string tmdb_id { get; set; }
+        [JsonPropertyName("tmdb_id")]
+        public string TmbdId { get; set; }
 
-        public string imdb_id { get; set; }
+        [JsonPropertyName("imdb_id")]
+        public string ImdbId { get; set; }
 
-        public List<MovieImage> hdmovielogo { get; set; }
+        [JsonPropertyName("hdmovielogo")]
+        public List<MovieImage> HdMovieLogos { get; set; }
 
-        public List<MovieImage> moviedisc { get; set; }
+        [JsonPropertyName("moviedisc")]
+        public List<MovieImage> MovieDiscImages { get; set; }
 
-        public List<MovieImage> movielogo { get; set; }
+        [JsonPropertyName("movielogo")]
+        public List<MovieImage> MovieLogos { get; set; }
 
-        public List<MovieImage> movieposter { get; set; }
+        [JsonPropertyName("movieposter")]
+        public List<MovieImage> MoviePosters { get; set; }
 
-        public List<MovieImage> hdmovieclearart { get; set; }
+        [JsonPropertyName("hdmovieclearart")]
+        public List<MovieImage> HdMovieClearArts { get; set; }
 
-        public List<MovieImage> movieart { get; set; }
+        [JsonPropertyName("movieart")]
+        public List<MovieImage> MovieArts { get; set; }
 
-        public List<MovieImage> moviebackground { get; set; }
+        [JsonPropertyName("moviebackground")]
+        public List<MovieImage> MovieBackgrounds { get; set; }
 
-        public List<MovieImage> moviebanner { get; set; }
+        [JsonPropertyName("moviebanner")]
+        public List<MovieImage> MovieBanners { get; set; }
 
-        public List<MovieImage> moviethumb { get; set; }
+        [JsonPropertyName("moviethumb")]
+        public List<MovieImage> MovieThumbs { get; set; }
     }
 }

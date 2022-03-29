@@ -148,15 +148,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
         private void AddImages(List<RemoteImageInfo> list, SeriesRootObject obj)
         {
-            PopulateImages(list, obj.hdtvlogo, ImageType.Logo, 800, 310);
-            PopulateImages(list, obj.hdclearart, ImageType.Art, 1000, 562);
-            PopulateImages(list, obj.clearlogo, ImageType.Logo, 400, 155);
-            PopulateImages(list, obj.clearart, ImageType.Art, 500, 281);
-            PopulateImages(list, obj.showbackground, ImageType.Backdrop, 1920, 1080, true);
-            PopulateImages(list, obj.seasonthumb, ImageType.Thumb, 500, 281);
-            PopulateImages(list, obj.tvthumb, ImageType.Thumb, 500, 281);
-            PopulateImages(list, obj.tvbanner, ImageType.Banner, 1000, 185);
-            PopulateImages(list, obj.tvposter, ImageType.Primary, 1000, 1426);
+            PopulateImages(list, obj.HdTvLogos, ImageType.Logo, 800, 310);
+            PopulateImages(list, obj.HdClearArts, ImageType.Art, 1000, 562);
+            PopulateImages(list, obj.ClearLogos, ImageType.Logo, 400, 155);
+            PopulateImages(list, obj.ClearArts, ImageType.Art, 500, 281);
+            PopulateImages(list, obj.Showbackgrounds, ImageType.Backdrop, 1920, 1080, true);
+            PopulateImages(list, obj.SeasonThumbs, ImageType.Thumb, 500, 281);
+            PopulateImages(list, obj.TvThumbs, ImageType.Thumb, 500, 281);
+            PopulateImages(list, obj.TvBanners, ImageType.Banner, 1000, 185);
+            PopulateImages(list, obj.TvPosters, ImageType.Primary, 1000, 1426);
         }
 
         private void PopulateImages(
@@ -174,15 +174,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
-                var season = i.season;
+                var url = i.Url;
+                var season = i.Season;
 
                 var isSeasonValid = string.IsNullOrEmpty(season) ||
                     (allowSeasonAll && string.Equals(season, "all", StringComparison.OrdinalIgnoreCase));
 
                 if (!string.IsNullOrEmpty(url) && isSeasonValid)
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -192,7 +192,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)

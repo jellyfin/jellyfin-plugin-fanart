@@ -1,17 +1,23 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Dtos
 {
     public class SeriesImage
     {
-        public string id { get; set; }
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
 
-        public string url { get; set; }
+        [JsonPropertyName("url")]
+        public string Url { get; set; }
 
-        public string lang { get; set; }
+        [JsonPropertyName("lang")]
+        public string Language { get; set; }
 
-        public string likes { get; set; }
+        [JsonPropertyName("likes")]
+        public string Likes { get; set; }
 
-        public string season { get; set; }
+        [JsonPropertyName("season")]
+        public string Season { get; set; }
     }
 }

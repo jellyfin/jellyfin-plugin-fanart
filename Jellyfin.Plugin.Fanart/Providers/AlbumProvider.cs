@@ -134,20 +134,20 @@ namespace Jellyfin.Plugin.Fanart.Providers
             Stream fileStream = File.OpenRead(path);
             var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
-            if (obj.albums != null)
+            if (obj.Albums != null)
             {
-                var album = obj.albums.FirstOrDefault(i => (string.Equals(i.Key, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Key, releaseGroupId, StringComparison.OrdinalIgnoreCase)));
-                var albumcover = album.Value.albumcover;
-                var cdart = album.Value.cdart;
+                var album = obj.Albums.FirstOrDefault(i => (string.Equals(i.Key, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Key, releaseGroupId, StringComparison.OrdinalIgnoreCase)));
+                var albumcovers = album.Value.AlbumCovers;
+                var cdarts = album.Value.CdArts;
 
-                if ( albumcover != null)
+                if ( albumcovers != null)
                 {
-                    PopulateImages(list, albumcover, ImageType.Primary, 1000, 1000);
+                    PopulateImages(list, albumcovers, ImageType.Primary, 1000, 1000);
                 }
 
-                if (cdart != null)
+                if (cdarts != null)
                 {
-                    PopulateImages(list, cdart, ImageType.Disc, 1000, 1000);
+                    PopulateImages(list, cdarts, ImageType.Disc, 1000, 1000);
                 }
             }
         }
@@ -166,11 +166,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
+                var url = i.Url;
 
                 if (!string.IsNullOrEmpty(url))
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -180,7 +180,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)

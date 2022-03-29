@@ -1,11 +1,14 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Dtos
 {
     public class Album
     {
-        public List<ArtistImage> cdart { get; set; }
+        [JsonPropertyName("cdart")]
+        public List<ArtistImage> CdArts { get; set; }
 
-        public List<ArtistImage> albumcover { get; set; }
+        [JsonPropertyName("albumcover")]
+        public List<ArtistImage> AlbumCovers { get; set; }
     }
 }

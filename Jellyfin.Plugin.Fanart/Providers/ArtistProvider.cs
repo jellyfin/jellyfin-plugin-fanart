@@ -135,13 +135,13 @@ namespace Jellyfin.Plugin.Fanart.Providers
             Stream fileStream = File.OpenRead(path);
             var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
-            PopulateImages(list, obj.artistbackground, ImageType.Backdrop, 1920, 1080);
-            PopulateImages(list, obj.artistthumb, ImageType.Primary, 500, 281);
-            PopulateImages(list, obj.hdmusiclogo, ImageType.Logo, 800, 310);
-            PopulateImages(list, obj.musicbanner, ImageType.Banner, 1000, 185);
-            PopulateImages(list, obj.musiclogo, ImageType.Logo, 400, 155);
-            PopulateImages(list, obj.hdmusicarts, ImageType.Art, 1000, 562);
-            PopulateImages(list, obj.musicarts, ImageType.Art, 500, 281);
+            PopulateImages(list, obj.ArtistBackgrounds, ImageType.Backdrop, 1920, 1080);
+            PopulateImages(list, obj.ArtistThumbs, ImageType.Primary, 500, 281);
+            PopulateImages(list, obj.HdMusicLogos, ImageType.Logo, 800, 310);
+            PopulateImages(list, obj.MusicBanners, ImageType.Banner, 1000, 185);
+            PopulateImages(list, obj.MusicLogos, ImageType.Logo, 400, 155);
+            PopulateImages(list, obj.HdmusicArts, ImageType.Art, 1000, 562);
+            PopulateImages(list, obj.MusicArts, ImageType.Art, 500, 281);
         }
 
         private void PopulateImages(
@@ -158,11 +158,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
+                var url = i.Url;
 
                 if (!string.IsNullOrEmpty(url))
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -172,7 +172,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)

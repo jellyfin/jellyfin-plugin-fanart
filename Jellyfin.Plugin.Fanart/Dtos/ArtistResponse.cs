@@ -1,27 +1,38 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace Jellyfin.Plugin.Fanart.Dtos
 {
     public class ArtistResponse
     {
-        public string name { get; set; }
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
 
-        public string mbid_id { get; set; }
+        [JsonPropertyName("mbid_id")]
+        public string MusicBrainzId { get; set; }
 
-        public List<ArtistImage> artistthumb { get; set; }
+        [JsonPropertyName("artistthumb")]
+        public List<ArtistImage> ArtistThumbs { get; set; }
 
-        public List<ArtistImage> artistbackground { get; set; }
+        [JsonPropertyName("artistbackground")]
+        public List<ArtistImage> ArtistBackgrounds { get; set; }
 
-        public List<ArtistImage> hdmusiclogo { get; set; }
+        [JsonPropertyName("hdmusiclogo")]
+        public List<ArtistImage> HdMusicLogos { get; set; }
 
-        public List<ArtistImage> musicbanner { get; set; }
+        [JsonPropertyName("musicbanner")]
+        public List<ArtistImage> MusicBanners { get; set; }
 
-        public List<ArtistImage> musiclogo { get; set; }
+        [JsonPropertyName("musiclogo")]
+        public List<ArtistImage> MusicLogos { get; set; }
 
-        public List<ArtistImage> musicarts { get; set; }
+        [JsonPropertyName("musicarts")]
+        public List<ArtistImage> MusicArts { get; set; }
 
-        public List<ArtistImage> hdmusicarts { get; set; }
+        [JsonPropertyName("hdmusicarts")]
+        public List<ArtistImage> HdmusicArts { get; set; }
 
-        public Dictionary<string, Album> albums { get; set; }
+        [JsonPropertyName("albums")]
+        public Dictionary<string, Album> Albums { get; set; }
     }
 }

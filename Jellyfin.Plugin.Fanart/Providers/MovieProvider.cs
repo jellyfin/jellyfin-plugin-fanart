@@ -141,15 +141,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
         private void AddImages(List<RemoteImageInfo> list, MovieRootObject obj)
         {
-            PopulateImages(list, obj.hdmovieclearart, ImageType.Art, 1000, 562);
-            PopulateImages(list, obj.hdmovielogo, ImageType.Logo, 800, 310);
-            PopulateImages(list, obj.moviedisc, ImageType.Disc, 1000, 1000);
-            PopulateImages(list, obj.movieposter, ImageType.Primary, 1000, 1426);
-            PopulateImages(list, obj.movielogo, ImageType.Logo, 400, 155);
-            PopulateImages(list, obj.movieart, ImageType.Art, 500, 281);
-            PopulateImages(list, obj.moviethumb, ImageType.Thumb, 1000, 562);
-            PopulateImages(list, obj.moviebanner, ImageType.Banner, 1000, 185);
-            PopulateImages(list, obj.moviebackground, ImageType.Backdrop, 1920, 1080);
+            PopulateImages(list, obj.HdMovieClearArts, ImageType.Art, 1000, 562);
+            PopulateImages(list, obj.HdMovieLogos, ImageType.Logo, 800, 310);
+            PopulateImages(list, obj.MovieDiscImages, ImageType.Disc, 1000, 1000);
+            PopulateImages(list, obj.MoviePosters, ImageType.Primary, 1000, 1426);
+            PopulateImages(list, obj.MovieLogos, ImageType.Logo, 400, 155);
+            PopulateImages(list, obj.MovieArts, ImageType.Art, 500, 281);
+            PopulateImages(list, obj.MovieThumbs, ImageType.Thumb, 1000, 562);
+            PopulateImages(list, obj.MovieBanners, ImageType.Banner, 1000, 185);
+            PopulateImages(list, obj.MovieBackgrounds, ImageType.Backdrop, 1920, 1080);
         }
 
         private void PopulateImages(List<RemoteImageInfo> list, List<MovieImage> images, ImageType type, int width, int height)
@@ -161,11 +161,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
+                var url = i.Url;
 
                 if (!string.IsNullOrEmpty(url))
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -175,7 +175,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url,
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)
