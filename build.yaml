@@ -2,7 +2,7 @@ name: "Fanart"
 guid: "170a157f-ac6c-437a-abdd-ca9c25cebd39"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-fanart.png"
 version: "9"
-targetAbi: "10.8.0.0"
+targetAbi: "10.7.7.0"
 framework: "net6.0"
 overview: "Scrape poster images from Fanart"
 description: "Scrape poster images for movies, shows, and artists in your library."
@@ -11,5 +11,11 @@ owner: "jellyfin"
 artifacts:
   - "Jellyfin.Plugin.Fanart.dll"
 changelog: |2-
+  ### Bug Fixes ###
+  - Extract DTOs and fix album parsing (#37) @Shadowghost
+
   ### Code or Repo Maintenance ###
-  - 10.8 support (#30) @crobibero
+  - Use meta ci (#35) @crobibero
+
+  ### CI & build changes ###
+  - Use meta ci (#35) @crobibero
