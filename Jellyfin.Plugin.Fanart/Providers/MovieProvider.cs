@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -66,7 +67,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
             var baseItem = item;
             var list = new List<RemoteImageInfo>();
 
-            var movieId = baseItem.GetProviderId(MetadataProvider.Tmdb);
+            var movieId = baseItem.GetProviderId(MetadataProvider.Tmdb) ?? baseItem.GetProviderId(MetadataProvider.Imdb);
 
             if (!string.IsNullOrEmpty(movieId))
             {
@@ -133,25 +134,25 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<RootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<MovieRootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             AddImages(list, root);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, RootObject obj)
+        private void AddImages(List<RemoteImageInfo> list, MovieRootObject obj)
         {
-            PopulateImages(list, obj.hdmovieclearart, ImageType.Art, 1000, 562);
-            PopulateImages(list, obj.hdmovielogo, ImageType.Logo, 800, 310);
-            PopulateImages(list, obj.moviedisc, ImageType.Disc, 1000, 1000);
-            PopulateImages(list, obj.movieposter, ImageType.Primary, 1000, 1426);
-            PopulateImages(list, obj.movielogo, ImageType.Logo, 400, 155);
-            PopulateImages(list, obj.movieart, ImageType.Art, 500, 281);
-            PopulateImages(list, obj.moviethumb, ImageType.Thumb, 1000, 562);
-            PopulateImages(list, obj.moviebanner, ImageType.Banner, 1000, 185);
-            PopulateImages(list, obj.moviebackground, ImageType.Backdrop, 1920, 1080);
+            PopulateImages(list, obj.HdMovieClearArts, ImageType.Art, 1000, 562);
+            PopulateImages(list, obj.HdMovieLogos, ImageType.Logo, 800, 310);
+            PopulateImages(list, obj.MovieDiscImages, ImageType.Disc, 1000, 1000);
+            PopulateImages(list, obj.MoviePosters, ImageType.Primary, 1000, 1426);
+            PopulateImages(list, obj.MovieLogos, ImageType.Logo, 400, 155);
+            PopulateImages(list, obj.MovieArts, ImageType.Art, 500, 281);
+            PopulateImages(list, obj.MovieThumbs, ImageType.Thumb, 1000, 562);
+            PopulateImages(list, obj.MovieBanners, ImageType.Banner, 1000, 185);
+            PopulateImages(list, obj.MovieBackgrounds, ImageType.Backdrop, 1920, 1080);
         }
 
-        private void PopulateImages(List<RemoteImageInfo> list, List<Image> images, ImageType type, int width, int height)
+        private void PopulateImages(List<RemoteImageInfo> list, List<MovieImage> images, ImageType type, int width, int height)
         {
             if (images == null)
             {
@@ -160,11 +161,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
+                var url = i.Url;
 
                 if (!string.IsNullOrEmpty(url))
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -174,7 +175,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url,
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)
@@ -270,7 +271,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 {
                     // If the user has automatic updates enabled, save a dummy object to prevent repeated download attempts
                     Stream fileStream = File.OpenWrite(path);
-                    await JsonSerializer.SerializeAsync(fileStream, new RootObject(), JsonDefaults.Options).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new MovieRootObject(), JsonDefaults.Options).ConfigureAwait(false);
 
                     return;
                 }
@@ -292,44 +293,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
             }
 
             return DownloadMovieJson(id, cancellationToken);
-        }
-
-        public class Image
-        {
-            public string id { get; set; }
-
-            public string url { get; set; }
-
-            public string lang { get; set; }
-
-            public string likes { get; set; }
-        }
-
-        public class RootObject
-        {
-            public string name { get; set; }
-
-            public string tmdb_id { get; set; }
-
-            public string imdb_id { get; set; }
-
-            public List<Image> hdmovielogo { get; set; }
-
-            public List<Image> moviedisc { get; set; }
-
-            public List<Image> movielogo { get; set; }
-
-            public List<Image> movieposter { get; set; }
-
-            public List<Image> hdmovieclearart { get; set; }
-
-            public List<Image> movieart { get; set; }
-
-            public List<Image> moviebackground { get; set; }
-
-            public List<Image> moviebanner { get; set; }
-
-            public List<Image> moviethumb { get; set; }
         }
     }
 }

@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -134,13 +135,13 @@ namespace Jellyfin.Plugin.Fanart.Providers
             Stream fileStream = File.OpenRead(path);
             var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
-            PopulateImages(list, obj.artistbackground, ImageType.Backdrop, 1920, 1080);
-            PopulateImages(list, obj.artistthumb, ImageType.Primary, 500, 281);
-            PopulateImages(list, obj.hdmusiclogo, ImageType.Logo, 800, 310);
-            PopulateImages(list, obj.musicbanner, ImageType.Banner, 1000, 185);
-            PopulateImages(list, obj.musiclogo, ImageType.Logo, 400, 155);
-            PopulateImages(list, obj.hdmusicarts, ImageType.Art, 1000, 562);
-            PopulateImages(list, obj.musicarts, ImageType.Art, 500, 281);
+            PopulateImages(list, obj.ArtistBackgrounds, ImageType.Backdrop, 1920, 1080);
+            PopulateImages(list, obj.ArtistThumbs, ImageType.Primary, 500, 281);
+            PopulateImages(list, obj.HdMusicLogos, ImageType.Logo, 800, 310);
+            PopulateImages(list, obj.MusicBanners, ImageType.Banner, 1000, 185);
+            PopulateImages(list, obj.MusicLogos, ImageType.Logo, 400, 155);
+            PopulateImages(list, obj.HdmusicArts, ImageType.Art, 1000, 562);
+            PopulateImages(list, obj.MusicArts, ImageType.Art, 500, 281);
         }
 
         private void PopulateImages(
@@ -157,11 +158,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
+                var url = i.Url;
 
                 if (!string.IsNullOrEmpty(url))
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -171,7 +172,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)
@@ -289,53 +290,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
             var dataPath = GetArtistDataPath(appPaths, musicBrainzArtistId);
 
             return Path.Combine(dataPath, "fanart.json");
-        }
-
-        public class ArtistImage
-        {
-            public string id { get; set; }
-
-            public string url { get; set; }
-
-            public string likes { get; set; }
-
-            public string disc { get; set; }
-
-            public string size { get; set; }
-
-            public string lang { get; set; }
-        }
-
-        public class Album
-        {
-            public string release_group_id { get; set; }
-
-            public List<ArtistImage> cdart { get; set; }
-
-            public List<ArtistImage> albumcover { get; set; }
-        }
-
-        public class ArtistResponse
-        {
-            public string name { get; set; }
-
-            public string mbid_id { get; set; }
-
-            public List<ArtistImage> artistthumb { get; set; }
-
-            public List<ArtistImage> artistbackground { get; set; }
-
-            public List<ArtistImage> hdmusiclogo { get; set; }
-
-            public List<ArtistImage> musicbanner { get; set; }
-
-            public List<ArtistImage> musiclogo { get; set; }
-
-            public List<ArtistImage> musicarts { get; set; }
-
-            public List<ArtistImage> hdmusicarts { get; set; }
-
-            public List<Album> albums { get; set; }
         }
     }
 }

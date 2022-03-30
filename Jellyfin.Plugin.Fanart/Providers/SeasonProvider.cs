@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.TV;
@@ -56,11 +57,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
             var list = new List<RemoteImageInfo>();
 
             var season = (Season)item;
-            var series = season.Series;
 
-            if (series != null)
+            if (season != null)
             {
-                var id = series.GetProviderId(MetadataProvider.Tvdb);
+                var id = season.GetProviderId(MetadataProvider.Tmdb) ?? season.GetProviderId(MetadataProvider.Tvdb);
 
                 if (!string.IsNullOrEmpty(id) && season.IndexNumber.HasValue)
                 {
@@ -129,22 +129,22 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<SeriesProvider.RootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
 
             AddImages(list, root, seasonNumber, cancellationToken);
         }
 
-        private void AddImages(List<RemoteImageInfo> list, SeriesProvider.RootObject obj, int seasonNumber, CancellationToken cancellationToken)
+        private void AddImages(List<RemoteImageInfo> list, SeriesRootObject obj, int seasonNumber, CancellationToken cancellationToken)
         {
-            PopulateImages(list, obj.seasonposter, ImageType.Primary, 1000, 1426, seasonNumber);
-            PopulateImages(list, obj.seasonbanner, ImageType.Banner, 1000, 185, seasonNumber);
-            PopulateImages(list, obj.seasonthumb, ImageType.Thumb, 500, 281, seasonNumber);
-            PopulateImages(list, obj.showbackground, ImageType.Backdrop, 1920, 1080, seasonNumber);
+            PopulateImages(list, obj.SeasonPosters, ImageType.Primary, 1000, 1426, seasonNumber);
+            PopulateImages(list, obj.SeasonBanners, ImageType.Banner, 1000, 185, seasonNumber);
+            PopulateImages(list, obj.SeasonThumbs, ImageType.Thumb, 500, 281, seasonNumber);
+            PopulateImages(list, obj.Showbackgrounds, ImageType.Backdrop, 1920, 1080, seasonNumber);
         }
 
         private void PopulateImages(
             List<RemoteImageInfo> list,
-            List<SeriesProvider.Image> images,
+            List<SeriesImage> images,
             ImageType type,
             int width,
             int height,
@@ -157,15 +157,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             list.AddRange(images.Select(i =>
             {
-                var url = i.url;
-                var season = i.season;
+                var url = i.Url;
+                var season = i.Season;
 
                 if (!string.IsNullOrEmpty(url)
                     && !string.IsNullOrEmpty(season)
                     && int.TryParse(season, NumberStyles.Integer, CultureInfo.InvariantCulture, out var imageSeasonNumber)
                     && seasonNumber == imageSeasonNumber)
                 {
-                    var likesString = i.likes;
+                    var likesString = i.Likes;
 
                     var info = new RemoteImageInfo
                     {
@@ -175,7 +175,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.lang
+                        Language = i.Language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)
