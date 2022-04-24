@@ -11,5 +11,11 @@ owner: "jellyfin"
 artifacts:
   - "Jellyfin.Plugin.Fanart.dll"
 changelog: |2-
+  ### Bug Fixes ###
+  - Extract DTOs and fix album parsing (#37) @Shadowghost
+
   ### Code or Repo Maintenance ###
-  - 10.8 support (#30) @crobibero
+  - Use meta ci (#35) @crobibero
+
+  ### CI & build changes ###
+  - Use meta ci (#35) @crobibero
