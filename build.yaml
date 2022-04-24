@@ -1,7 +1,7 @@
 name: "Fanart"
 guid: "170a157f-ac6c-437a-abdd-ca9c25cebd39"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-fanart.png"
-version: "9"
+version: "10"
 targetAbi: "10.8.0.0"
 framework: "net6.0"
 overview: "Scrape poster images from Fanart"
@@ -10,7 +10,7 @@ category: "Metadata"
 owner: "jellyfin"
 artifacts:
   - "Jellyfin.Plugin.Fanart.dll"
-changelog: |2-
+changelog: |-
   ### Bug Fixes ###
   - Extract DTOs and fix album parsing (#37) @Shadowghost
 
