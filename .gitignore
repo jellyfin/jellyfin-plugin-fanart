@@ -2,3 +2,5 @@ bin/
 obj/
 .idea/
 .vs/
+artifacts
+.idea
