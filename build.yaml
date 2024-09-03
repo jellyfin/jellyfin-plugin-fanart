@@ -11,4 +11,5 @@ owner: "jellyfin"
 artifacts:
   - "Jellyfin.Plugin.Fanart.dll"
 changelog: |-
+  - Link to wiki for API key information (#51) @enter-a-random-username
   - Use latest API 3.2 (#49) @enter-a-random-username
