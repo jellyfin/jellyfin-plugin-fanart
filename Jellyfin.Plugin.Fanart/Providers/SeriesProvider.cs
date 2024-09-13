@@ -201,7 +201,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         info.CommunityRating = likes;
                     }
 
-                    if (type == ImageType.Thumb && DateTime.Parse(i.Added,  null) < new DateTime(2016,1,1)) {
+                    if (type == ImageType.Thumb && DateTime.Parse(i.Added,  null) < new DateTime(2016,1,8)) {
                         info.Width = 500;
                         info.Height = 281;
                     }
