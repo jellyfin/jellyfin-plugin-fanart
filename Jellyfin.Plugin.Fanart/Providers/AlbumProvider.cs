@@ -136,9 +136,9 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
             if (obj.Albums != null)
             {
-                var album = obj.Albums.FirstOrDefault(i => string.Equals(i.Key, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.Key, releaseGroupId, StringComparison.OrdinalIgnoreCase));
-                var albumcovers = album.Value.AlbumCovers;
-                var cdarts = album.Value.CdArts;
+                var album = obj.Albums.FirstOrDefault(i => string.Equals(i.ReleaseGroupId, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.ReleaseGroupId, releaseGroupId, StringComparison.OrdinalIgnoreCase));
+                var albumcovers = album?.AlbumCovers;
+                var cdarts = album?.CdArts;
 
                 if (albumcovers != null)
                 {
