@@ -138,7 +138,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         {
             PopulateImages(list, obj.SeasonPosters, ImageType.Primary, 1000, 1426, seasonNumber);
             PopulateImages(list, obj.SeasonBanners, ImageType.Banner, 1000, 185, seasonNumber);
-            PopulateImages(list, obj.SeasonThumbs, ImageType.Thumb, 500, 281, seasonNumber);
+            PopulateImages(list, obj.SeasonThumbs, ImageType.Thumb, 1000, 562, seasonNumber);
             PopulateImages(list, obj.Showbackgrounds, ImageType.Backdrop, 1920, 1080, seasonNumber);
         }
 
@@ -182,6 +182,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
+                    }
+
+                    if (type == ImageType.Thumb && DateTime.Parse(i.Added,  null) < new DateTime(2016,1,1)) {
+                        info.Width = 500;
+                        info.Height = 281;
                     }
 
                     return info;
