@@ -44,11 +44,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
-            return new List<ImageType>
-            {
+            return
+            [
                 ImageType.Primary,
                 ImageType.Disc
-            };
+            ];
         }
 
         /// <inheritdoc />

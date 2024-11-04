@@ -29,7 +29,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IFileSystem _fileSystem;
 
-        private readonly SemaphoreSlim _ensureSemaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim _ensureSemaphore = new(1, 1);
 
         public SeriesProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem)
         {
@@ -55,15 +55,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
-            return new List<ImageType>
-            {
+            return
+            [
                 ImageType.Primary,
                 ImageType.Thumb,
                 ImageType.Art,
                 ImageType.Logo,
                 ImageType.Backdrop,
                 ImageType.Banner
-            };
+            ];
         }
 
         /// <inheritdoc />
@@ -307,12 +307,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
             try
             {
                 var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
-                using (var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false))
-                using (var response = httpResponse.Content)
-                using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
-                {
-                    await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
-                }
+                using var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false);
+                using var response = httpResponse.Content;
+                using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
+                await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
             }
             catch (HttpRequestException exception)
             {

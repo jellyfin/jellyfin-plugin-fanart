@@ -49,8 +49,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
-            return new List<ImageType>
-            {
+            return
+            [
                 ImageType.Primary,
                 ImageType.Thumb,
                 ImageType.Art,
@@ -58,7 +58,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 ImageType.Disc,
                 ImageType.Banner,
                 ImageType.Backdrop
-            };
+            ];
         }
 
         /// <inheritdoc />
@@ -258,12 +258,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
             try
             {
                 var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
-                using (var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false))
-                using (var response = httpResponse.Content)
-                using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
-                {
-                    await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
-                }
+                using var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false);
+                using var response = httpResponse.Content;
+                using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
+                await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
             }
             catch (HttpRequestException exception)
             {
