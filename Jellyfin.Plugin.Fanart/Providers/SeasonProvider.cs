@@ -129,7 +129,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
             AddImages(list, root, seasonNumber, cancellationToken);
         }

@@ -271,7 +271,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 {
                     // If the user has automatic updates enabled, save a dummy object to prevent repeated download attempts
                     Stream fileStream = File.OpenWrite(path);
-                    await JsonSerializer.SerializeAsync(fileStream, new MovieRootObject(), JsonDefaults.Options).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new MovieRootObject(), JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
                     return;
                 }

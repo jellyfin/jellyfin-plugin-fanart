@@ -133,7 +133,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
             PopulateImages(list, obj.ArtistBackgrounds, ImageType.Backdrop, 1920, 1080);
             PopulateImages(list, obj.ArtistThumbs, ImageType.Primary, 500, 281);
@@ -251,7 +251,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (ex.StatusCode.HasValue && ex.StatusCode.Value == HttpStatusCode.NotFound)
                 {
                     Stream fileStream = File.OpenWrite(jsonPath);
-                    await JsonSerializer.SerializeAsync(fileStream, new ArtistResponse(), JsonDefaults.Options).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new ArtistResponse(), JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {

@@ -94,7 +94,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
 
                 try
                 {
-                    await AddImages(list, path);
+                    await AddImages(list, path, cancellationToken);
                 }
                 catch (FileNotFoundException)
                 {
@@ -138,10 +138,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 .ThenByDescending(i => i.VoteCount ?? 0);
         }
 
-        private async Task AddImages(List<RemoteImageInfo> list, string path)
+        private async Task AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
             AddImages(list, root);
         }
