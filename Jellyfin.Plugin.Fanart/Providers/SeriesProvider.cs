@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
@@ -70,9 +71,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
             var list = new List<RemoteImageInfo>();
-
             var series = (Series)item;
-
             var id = series.GetProviderId(MetadataProvider.Tvdb);
 
             if (!string.IsNullOrEmpty(id))
@@ -91,7 +90,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 }
 
                 var path = GetJsonPath(id);
-
                 try
                 {
                     await AddImages(list, path, cancellationToken);
@@ -107,7 +105,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
             }
 
             var language = item.GetPreferredMetadataLanguage();
-
             var isLanguageEn = string.Equals(language, "en", StringComparison.OrdinalIgnoreCase);
 
             // Sort first by width to prioritize HD versions
@@ -183,6 +180,18 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (!string.IsNullOrEmpty(url) && isSeasonValid)
                 {
                     var likesString = i.Likes;
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
 
                     var info = new RemoteImageInfo
                     {
@@ -199,11 +208,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
-                    }
-
-                    if (type == ImageType.Thumb && DateTime.Parse(i.Added,  null) < new DateTime(2016,1,8)) {
-                        info.Width = 500;
-                        info.Height = 281;
                     }
 
                     return info;
@@ -318,7 +322,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 {
                     // If the user has automatic updates enabled, save a dummy object to prevent repeated download attempts
                     Stream fileStream = File.OpenWrite(path);
-                    await JsonSerializer.SerializeAsync(fileStream, new SeriesRootObject(), JsonDefaults.Options).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new SeriesRootObject(), JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
                     return;
                 }

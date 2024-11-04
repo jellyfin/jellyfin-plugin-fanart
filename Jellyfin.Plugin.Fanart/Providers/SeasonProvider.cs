@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
@@ -166,6 +167,18 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     && seasonNumber == imageSeasonNumber)
                 {
                     var likesString = i.Likes;
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
 
                     var info = new RemoteImageInfo
                     {
@@ -182,11 +195,6 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
-                    }
-
-                    if (type == ImageType.Thumb && DateTime.Parse(i.Added,  null) < new DateTime(2016,1,1)) {
-                        info.Width = 500;
-                        info.Height = 281;
                     }
 
                     return info;

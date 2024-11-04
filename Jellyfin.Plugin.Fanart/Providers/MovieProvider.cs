@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
@@ -166,6 +167,18 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (!string.IsNullOrEmpty(url))
                 {
                     var likesString = i.Likes;
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
 
                     var info = new RemoteImageInfo
                     {

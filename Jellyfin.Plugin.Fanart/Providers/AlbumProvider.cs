@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -137,17 +138,17 @@ namespace Jellyfin.Plugin.Fanart.Providers
             if (obj.Albums != null)
             {
                 var album = obj.Albums.FirstOrDefault(i => string.Equals(i.ReleaseGroupId, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.ReleaseGroupId, releaseGroupId, StringComparison.OrdinalIgnoreCase));
-                var albumcovers = album?.AlbumCovers;
-                var cdarts = album?.CdArts;
+                var albumCovers = album?.AlbumCovers;
+                var cdArts = album?.CdArts;
 
-                if (albumcovers != null)
+                if (albumCovers != null)
                 {
-                    PopulateImages(list, albumcovers, ImageType.Primary, 1000, 1000);
+                    PopulateImages(list, albumCovers, ImageType.Primary, 1000, 1000);
                 }
 
-                if (cdarts != null)
+                if (cdArts != null)
                 {
-                    PopulateImages(list, cdarts, ImageType.Disc, 1000, 1000);
+                    PopulateImages(list, cdArts, ImageType.Disc, 1000, 1000);
                 }
             }
         }
@@ -171,6 +172,18 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (!string.IsNullOrEmpty(url))
                 {
                     var likesString = i.Likes;
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
 
                     var info = new RemoteImageInfo
                     {
