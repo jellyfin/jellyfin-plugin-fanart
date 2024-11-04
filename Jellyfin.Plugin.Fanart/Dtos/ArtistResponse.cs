@@ -33,6 +33,6 @@ namespace Jellyfin.Plugin.Fanart.Dtos
         public List<ArtistImage> HdmusicArts { get; set; }
 
         [JsonPropertyName("albums")]
-        public Dictionary<string, Album> Albums { get; set; }
+        public List<Album> Albums { get; set; }
     }
 }
