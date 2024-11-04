@@ -5,6 +5,9 @@ namespace Jellyfin.Plugin.Fanart.Dtos
 {
     public class MovieRootObject
     {
+        [JsonPropertyName("image_count")]
+        public int ImageCount { get; set; }
+
         [JsonPropertyName("name")]
         public string Name { get; set; }
 
