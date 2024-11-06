@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
@@ -49,8 +50,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
-            return new List<ImageType>
-            {
+            return
+            [
                 ImageType.Primary,
                 ImageType.Thumb,
                 ImageType.Art,
@@ -58,7 +59,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 ImageType.Disc,
                 ImageType.Banner,
                 ImageType.Backdrop
-            };
+            ];
         }
 
         /// <inheritdoc />
@@ -166,6 +167,20 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (!string.IsNullOrEmpty(url))
                 {
                     var likesString = i.Likes;
+                    /* Disabled until returned values are reliable
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingThumbImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
+                    */
 
                     var info = new RemoteImageInfo
                     {
@@ -258,12 +273,10 @@ namespace Jellyfin.Plugin.Fanart.Providers
             try
             {
                 var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
-                using (var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false))
-                using (var response = httpResponse.Content)
-                using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
-                {
-                    await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
-                }
+                using var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false);
+                using var response = httpResponse.Content;
+                using var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
+                await response.CopyToAsync(fileStream, CancellationToken.None).ConfigureAwait(false);
             }
             catch (HttpRequestException exception)
             {
@@ -271,7 +284,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 {
                     // If the user has automatic updates enabled, save a dummy object to prevent repeated download attempts
                     Stream fileStream = File.OpenWrite(path);
-                    await JsonSerializer.SerializeAsync(fileStream, new MovieRootObject(), JsonDefaults.Options).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new MovieRootObject(), JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
                     return;
                 }
