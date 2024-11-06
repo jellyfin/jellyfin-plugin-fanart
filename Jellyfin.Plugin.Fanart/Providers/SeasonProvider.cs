@@ -193,15 +193,15 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Language = i.Language
                     };
 
-                    if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= new DateTime(2016,1,1))) {
-                        info.Width = 500;
-                        info.Height = 281;
-                    }
-
                     if (!string.IsNullOrEmpty(likesString)
                         && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
                     {
                         info.CommunityRating = likes;
+                    }
+
+                    if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= new DateTime(2016,1,1))) {
+                        info.Width = 500;
+                        info.Height = 281;
                     }
 
                     return info;
