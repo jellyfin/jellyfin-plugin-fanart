@@ -167,7 +167,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     && seasonNumber == imageSeasonNumber)
                 {
                     var likesString = i.Likes;
-                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingImageDimensions)
+                    /* Disabled until returned values are reliable
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingThumbImageDimensions)
                     {
                         if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
                         {
@@ -179,6 +180,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                             height = parsedWidth;
                         }
                     }
+                    */
 
                     var info = new RemoteImageInfo
                     {
@@ -190,6 +192,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
                         Language = i.Language
                     };
+
+                    if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= new DateTime(2016,1,1))) {
+                        info.Width = 500;
+                        info.Height = 281;
+                    }
 
                     if (!string.IsNullOrEmpty(likesString)
                         && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))

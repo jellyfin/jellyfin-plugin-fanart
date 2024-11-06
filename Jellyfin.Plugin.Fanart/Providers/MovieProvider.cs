@@ -167,7 +167,8 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (!string.IsNullOrEmpty(url))
                 {
                     var likesString = i.Likes;
-                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingImageDimensions)
+                    /* Disabled until returned values are reliable
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingThumbImageDimensions)
                     {
                         if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
                         {
@@ -179,6 +180,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                             height = parsedWidth;
                         }
                     }
+                    */
 
                     var info = new RemoteImageInfo
                     {
