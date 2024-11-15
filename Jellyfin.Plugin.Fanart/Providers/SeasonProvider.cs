@@ -199,7 +199,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         info.CommunityRating = likes;
                     }
 
-                    if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= new DateTime(2016,1,1))) {
+                    if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= Constants.WorkingThumbImageDimensions)) {
                         info.Width = 500;
                         info.Height = 281;
                     }
