@@ -182,6 +182,13 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     }
                     */
 
+                    // Fanart sometimes uses 00 to denote images without language, Jellyfin expects null or an empty string
+                    var language = i.Language;
+                    if (string.Equals(language, "00", StringComparison.OrdinalIgnoreCase))
+                    {
+                        language = null;
+                    }
+
                     var info = new RemoteImageInfo
                     {
                         RatingType = RatingType.Likes,
@@ -190,7 +197,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url,
-                        Language = i.Language
+                        Language = language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)
