@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -44,11 +45,11 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
-            return new List<ImageType>
-            {
+            return
+            [
                 ImageType.Primary,
                 ImageType.Disc
-            };
+            ];
         }
 
         /// <inheritdoc />
@@ -132,22 +133,22 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path, string releaseId, string releaseGroupId, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
             if (obj.Albums != null)
             {
                 var album = obj.Albums.FirstOrDefault(i => string.Equals(i.ReleaseGroupId, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.ReleaseGroupId, releaseGroupId, StringComparison.OrdinalIgnoreCase));
-                var albumcovers = album?.AlbumCovers;
-                var cdarts = album?.CdArts;
+                var albumCovers = album?.AlbumCovers;
+                var cdArts = album?.CdArts;
 
-                if (albumcovers != null)
+                if (albumCovers != null)
                 {
-                    PopulateImages(list, albumcovers, ImageType.Primary, 1000, 1000);
+                    PopulateImages(list, albumCovers, ImageType.Primary, 1000, 1000);
                 }
 
-                if (cdarts != null)
+                if (cdArts != null)
                 {
-                    PopulateImages(list, cdarts, ImageType.Disc, 1000, 1000);
+                    PopulateImages(list, cdArts, ImageType.Disc, 1000, 1000);
                 }
             }
         }
@@ -171,6 +172,27 @@ namespace Jellyfin.Plugin.Fanart.Providers
                 if (!string.IsNullOrEmpty(url))
                 {
                     var likesString = i.Likes;
+                    /* Disabled until returned values are reliable
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingThumbImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
+                    */
+
+                    // Fanart sometimes uses 00 to denote images without language, Jellyfin expects null or an empty string
+                    var language = i.Language;
+                    if (string.Equals(language, "00", StringComparison.OrdinalIgnoreCase))
+                    {
+                        language = null;
+                    }
 
                     var info = new RemoteImageInfo
                     {
@@ -180,7 +202,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.Language
+                        Language = language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)

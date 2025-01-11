@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Entities;
@@ -42,13 +43,13 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
-            return new List<ImageType>
-            {
+            return
+            [
                 ImageType.Backdrop,
                 ImageType.Thumb,
                 ImageType.Banner,
                 ImageType.Primary
-            };
+            ];
         }
 
         /// <inheritdoc />
@@ -129,7 +130,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, int seasonNumber, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var root = await JsonSerializer.DeserializeAsync<SeriesRootObject>(fileStream, JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
             AddImages(list, root, seasonNumber, cancellationToken);
         }
@@ -166,6 +167,27 @@ namespace Jellyfin.Plugin.Fanart.Providers
                     && seasonNumber == imageSeasonNumber)
                 {
                     var likesString = i.Likes;
+                    /* Disabled until returned values are reliable
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingThumbImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
+                    */
+
+                    // Fanart sometimes uses 00 to denote images without language, Jellyfin expects null or an empty string
+                    var language = i.Language;
+                    if (string.Equals(language, "00", StringComparison.OrdinalIgnoreCase))
+                    {
+                        language = null;
+                    }
 
                     var info = new RemoteImageInfo
                     {
@@ -175,7 +197,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.Language
+                        Language = language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)
@@ -184,7 +206,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         info.CommunityRating = likes;
                     }
 
-                    if (type == ImageType.Thumb && DateTime.Parse(i.Added,  null) < new DateTime(2016,1,1)) {
+                    if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= Constants.WorkingThumbImageDimensions)) {
                         info.Width = 500;
                         info.Height = 281;
                     }

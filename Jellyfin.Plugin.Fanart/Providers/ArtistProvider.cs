@@ -9,6 +9,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions.Json;
+using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Net;
@@ -53,14 +54,14 @@ namespace Jellyfin.Plugin.Fanart.Providers
         /// <inheritdoc />
         public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
         {
-            return new List<ImageType>
-            {
+            return
+            [
                 ImageType.Primary,
                 ImageType.Logo,
                 ImageType.Art,
                 ImageType.Banner,
                 ImageType.Backdrop
-            };
+            ];
         }
 
         /// <inheritdoc />
@@ -133,7 +134,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
         private async Task AddImages(List<RemoteImageInfo> list, string path, CancellationToken cancellationToken)
         {
             Stream fileStream = File.OpenRead(path);
-            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options).ConfigureAwait(false);
+            var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
 
             PopulateImages(list, obj.ArtistBackgrounds, ImageType.Backdrop, 1920, 1080);
             PopulateImages(list, obj.ArtistThumbs, ImageType.Primary, 500, 281);
@@ -159,10 +160,31 @@ namespace Jellyfin.Plugin.Fanart.Providers
             list.AddRange(images.Select(i =>
             {
                 var url = i.Url;
-
                 if (!string.IsNullOrEmpty(url))
                 {
                     var likesString = i.Likes;
+                    /* Disabled until returned values are reliable
+                    if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingThumbImageDimensions)
+                    {
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
+                        {
+                            width = parsedWidth;
+                        }
+
+                        if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
+                        {
+                            height = parsedWidth;
+                        }
+                    }
+                    */
+
+
+                    // Fanart sometimes uses 00 to denote images without language, Jellyfin expects null or an empty string
+                    var language = i.Language;
+                    if (string.Equals(language, "00", StringComparison.OrdinalIgnoreCase))
+                    {
+                        language = null;
+                    }
 
                     var info = new RemoteImageInfo
                     {
@@ -172,7 +194,7 @@ namespace Jellyfin.Plugin.Fanart.Providers
                         Height = height,
                         ProviderName = Name,
                         Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
-                        Language = i.Language
+                        Language = language
                     };
 
                     if (!string.IsNullOrEmpty(likesString)
@@ -239,19 +261,17 @@ namespace Jellyfin.Plugin.Fanart.Providers
             try
             {
                 var httpClient = _httpClientFactory.CreateClient(NamedClient.Default);
-                using (var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false))
-                using (var response = httpResponse.Content)
-                using (var saveFileStream = new FileStream(jsonPath, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous))
-                {
-                    await response.CopyToAsync(saveFileStream, CancellationToken.None).ConfigureAwait(false);
-                }
+                using var httpResponse = await httpClient.GetAsync(new Uri(url), cancellationToken).ConfigureAwait(false);
+                using var response = httpResponse.Content;
+                using var saveFileStream = new FileStream(jsonPath, FileMode.Create, FileAccess.Write, FileShare.Read, IODefaults.FileStreamBufferSize, FileOptions.Asynchronous);
+                await response.CopyToAsync(saveFileStream, CancellationToken.None).ConfigureAwait(false);
             }
             catch (HttpRequestException ex)
             {
                 if (ex.StatusCode.HasValue && ex.StatusCode.Value == HttpStatusCode.NotFound)
                 {
                     Stream fileStream = File.OpenWrite(jsonPath);
-                    await JsonSerializer.SerializeAsync(fileStream, new ArtistResponse(), JsonDefaults.Options).ConfigureAwait(false);
+                    await JsonSerializer.SerializeAsync(fileStream, new ArtistResponse(), JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
                 }
                 else
                 {
