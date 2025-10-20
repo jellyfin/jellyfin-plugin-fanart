@@ -1,7 +1,7 @@
 name: "Fanart"
 guid: "170a157f-ac6c-437a-abdd-ca9c25cebd39"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-fanart.png"
-version: 12
+version: 13
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 overview: "Scrape poster images from Fanart"
@@ -15,10 +15,10 @@ changelog: |-
   - Guess correct Thumb image size (#52) @enter-a-random-username
   - Adjust structure of the classes to v3.2 response (#56) @markalex2209
   - Link to wiki for API key information (#51) @enter-a-random-username
-  - Use latest API 3.2 (#49) @enter-a-random-username
 
   ### Code or Repo Maintenance ###
   - Maintenance (#57) @Shadowghost
 
   ### Dependency updates ###
+  - Update dependency Microsoft.Extensions.Http to 9.0.10 (#64) @renovate
   - Update dependency Microsoft.Extensions.Http to 8.0.1 (#54) @renovate
