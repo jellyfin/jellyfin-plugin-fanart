@@ -11,4 +11,14 @@ owner: "jellyfin"
 artifacts:
   - "Jellyfin.Plugin.Fanart.dll"
 changelog: |-
+  - Jellyfin 10.11 support (#62) @crobibero
+  - Guess correct Thumb image size (#52) @enter-a-random-username
+  - Adjust structure of the classes to v3.2 response (#56) @markalex2209
+  - Link to wiki for API key information (#51) @enter-a-random-username
   - Use latest API 3.2 (#49) @enter-a-random-username
+
+  ### Code or Repo Maintenance ###
+  - Maintenance (#57) @Shadowghost
+
+  ### Dependency updates ###
+  - Update dependency Microsoft.Extensions.Http to 8.0.1 (#54) @renovate
