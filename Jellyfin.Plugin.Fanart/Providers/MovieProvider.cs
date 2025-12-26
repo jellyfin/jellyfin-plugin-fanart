@@ -24,12 +24,21 @@ using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.Fanart.Providers;
 
+/// <summary>
+/// Movie image provider for Fanart.tv.
+/// </summary>
 public class MovieProvider : IRemoteImageProvider, IHasOrder
 {
     private readonly IServerConfigurationManager _config;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IFileSystem _fileSystem;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MovieProvider"/> class.
+    /// </summary>
+    /// <param name="config">The server configuration manager.</param>
+    /// <param name="httpClientFactory">The HTTP client factory.</param>
+    /// <param name="fileSystem">The file system.</param>
     public MovieProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem)
     {
         _config = config;
@@ -262,7 +271,7 @@ public class MovieProvider : IRemoteImageProvider, IHasOrder
 
         var url = string.Format(
             CultureInfo.InvariantCulture,
-            Plugin.BaseUrl,
+            Plugin.BaseUrlFormat,
             Plugin.ApiKey,
             id,
             "movies");

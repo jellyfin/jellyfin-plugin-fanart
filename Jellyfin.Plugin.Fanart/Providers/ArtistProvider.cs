@@ -24,12 +24,21 @@ using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.Fanart.Providers;
 
+/// <summary>
+/// Artist image provider for Fanart.tv.
+/// </summary>
 public class ArtistProvider : IRemoteImageProvider, IHasOrder
 {
     private readonly IServerConfigurationManager _config;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IFileSystem _fileSystem;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ArtistProvider"/> class.
+    /// </summary>
+    /// <param name="config">The server configuration manager.</param>
+    /// <param name="httpClientFactory">The HTTP client factory.</param>
+    /// <param name="fileSystem">The file system.</param>
     public ArtistProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem)
     {
         _config = config;
@@ -85,11 +94,11 @@ public class ArtistProvider : IRemoteImageProvider, IHasOrder
             }
             catch (FileNotFoundException)
             {
-
+                // No biggie. Don't blow up
             }
             catch (IOException)
             {
-
+                // No biggie. Don't blow up
             }
         }
 
@@ -178,7 +187,6 @@ public class ArtistProvider : IRemoteImageProvider, IHasOrder
                 }
                 */
 
-
                 // Fanart sometimes uses 00 to denote images without language, Jellyfin expects null or an empty string
                 var language = i.Language;
                 if (string.Equals(language, "00", StringComparison.OrdinalIgnoreCase))
@@ -243,7 +251,7 @@ public class ArtistProvider : IRemoteImageProvider, IHasOrder
 
         var url = string.Format(
             CultureInfo.InvariantCulture,
-            Plugin.BaseUrl,
+            Plugin.BaseUrlFormat,
             Plugin.ApiKey,
             musicBrainzId,
             "music");

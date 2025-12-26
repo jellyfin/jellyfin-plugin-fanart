@@ -21,10 +21,17 @@ using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.Fanart.Providers;
 
+/// <summary>
+/// Season image provider for Fanart.tv.
+/// </summary>
 public class SeasonProvider : IRemoteImageProvider, IHasOrder
 {
     private readonly IHttpClientFactory _httpClientFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SeasonProvider"/> class.
+    /// </summary>
+    /// <param name="httpClientFactory">The HTTP client factory.</param>
     public SeasonProvider(IHttpClientFactory httpClientFactory)
     {
         _httpClientFactory = httpClientFactory;
@@ -206,7 +213,8 @@ public class SeasonProvider : IRemoteImageProvider, IHasOrder
                     info.CommunityRating = likes;
                 }
 
-                if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= Constants.WorkingThumbImageDimensions)) {
+                if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= Constants.WorkingThumbImageDimensions))
+                {
                     info.Width = 500;
                     info.Height = 281;
                 }

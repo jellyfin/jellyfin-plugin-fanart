@@ -21,11 +21,19 @@ using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.Fanart.Providers;
 
+/// <summary>
+/// Album image provider for Fanart.tv.
+/// </summary>
 public class AlbumProvider : IRemoteImageProvider, IHasOrder
 {
     private readonly IServerConfigurationManager _config;
     private readonly IHttpClientFactory _httpClientFactory;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AlbumProvider"/> class.
+    /// </summary>
+    /// <param name="config">The server configuration manager.</param>
+    /// <param name="httpClientFactory">The HTTP client factory.</param>
     public AlbumProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory)
     {
         _config = config;
@@ -82,11 +90,11 @@ public class AlbumProvider : IRemoteImageProvider, IHasOrder
             }
             catch (FileNotFoundException)
             {
-
+                // No biggie. Don't blow up
             }
             catch (IOException)
             {
-
+                // No biggie. Don't blow up
             }
         }
 

@@ -24,7 +24,10 @@ using MediaBrowser.Model.Providers;
 
 namespace Jellyfin.Plugin.Fanart.Providers;
 
-public class SeriesProvider : IRemoteImageProvider, IHasOrder
+/// <summary>
+/// Series image provider for Fanart.tv.
+/// </summary>
+public class SeriesProvider : IRemoteImageProvider, IHasOrder, IDisposable
 {
     private readonly IServerConfigurationManager _config;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -32,6 +35,12 @@ public class SeriesProvider : IRemoteImageProvider, IHasOrder
 
     private readonly SemaphoreSlim _ensureSemaphore = new(1, 1);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SeriesProvider"/> class.
+    /// </summary>
+    /// <param name="config">The server configuration manager.</param>
+    /// <param name="httpClientFactory">The HTTP client factory.</param>
+    /// <param name="fileSystem">The file system.</param>
     public SeriesProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem)
     {
         _config = config;
@@ -219,7 +228,8 @@ public class SeriesProvider : IRemoteImageProvider, IHasOrder
                     info.CommunityRating = likes;
                 }
 
-                if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= Constants.WorkingThumbImageDimensions)) {
+                if (type == ImageType.Thumb && !(DateTime.TryParse(i.Added, out var added) && added >= Constants.WorkingThumbImageDimensions))
+                {
                     info.Width = 500;
                     info.Height = 281;
                 }
@@ -262,6 +272,11 @@ public class SeriesProvider : IRemoteImageProvider, IHasOrder
         return dataPath;
     }
 
+    /// <summary>
+    /// Gets the path to the cached JSON file for a series.
+    /// </summary>
+    /// <param name="tvdbId">The TVDB identifier.</param>
+    /// <returns>The path to the JSON file.</returns>
     public string GetJsonPath(string tvdbId)
     {
         var dataPath = GetSeriesDataPath(_config.ApplicationPaths, tvdbId);
@@ -307,7 +322,7 @@ public class SeriesProvider : IRemoteImageProvider, IHasOrder
 
         var url = string.Format(
             CultureInfo.InvariantCulture,
-            Plugin.BaseUrl,
+            Plugin.BaseUrlFormat,
             Plugin.ApiKey,
             tvdbId,
             "tv");
@@ -342,6 +357,25 @@ public class SeriesProvider : IRemoteImageProvider, IHasOrder
             }
 
             throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Releases unmanaged and optionally managed resources.
+    /// </summary>
+    /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _ensureSemaphore.Dispose();
         }
     }
 }
