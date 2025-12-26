@@ -1,9 +1,14 @@
 using MediaBrowser.Model.Plugins;
 
-namespace Jellyfin.Plugin.Fanart.Configuration
+namespace Jellyfin.Plugin.Fanart.Configuration;
+
+/// <summary>
+/// Plugin configuration.
+/// </summary>
+public class PluginConfiguration : BasePluginConfiguration
 {
-    public class PluginConfiguration : BasePluginConfiguration
-    {
-        public string PersonalApiKey { get; set; }
-    }
+    /// <summary>
+    /// Gets or sets the personal API key for Fanart.tv.
+    /// </summary>
+    public string PersonalApiKey { get; set; }
 }

@@ -2,7 +2,13 @@ using System;
 
 namespace Jellyfin.Plugin.Fanart.Configuration;
 
-public class Constants
+/// <summary>
+/// Plugin constants.
+/// </summary>
+public static class Constants
 {
-    public static DateTime WorkingThumbImageDimensions = new(2016,1,8);
+    /// <summary>
+    /// The date after which thumb image dimensions are reliable.
+    /// </summary>
+    public static readonly DateTime WorkingThumbImageDimensions = new(2016, 1, 8);
 }
