@@ -203,7 +203,8 @@ public class SeasonProvider : IRemoteImageProvider, IHasOrder
                     Width = width,
                     Height = height,
                     ProviderName = Name,
-                    Url = url.Replace("http://", "https://", StringComparison.OrdinalIgnoreCase),
+                    ThumbnailUrl = url.Replace("/fanart/", "/bigpreview/", StringComparison.OrdinalIgnoreCase),
+                    Url = url,
                     Language = language
                 };
 

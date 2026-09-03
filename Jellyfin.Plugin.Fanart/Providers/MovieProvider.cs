@@ -205,6 +205,7 @@ public class MovieProvider : IRemoteImageProvider, IHasOrder
                     Width = width,
                     Height = height,
                     ProviderName = Name,
+                    ThumbnailUrl = url.Replace("/fanart/", "/bigpreview/", StringComparison.OrdinalIgnoreCase),
                     Url = url,
                     Language = language
                 };
