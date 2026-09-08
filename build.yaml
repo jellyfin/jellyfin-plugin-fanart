@@ -1,7 +1,7 @@
 name: "Fanart"
 guid: "170a157f-ac6c-437a-abdd-ca9c25cebd39"
 imageUrl: "https://repo.jellyfin.org/releases/plugin/images/jellyfin-plugin-fanart.png"
-version: 14
+version: 15
 targetAbi: "12.0.0.0"
 framework: "net10.0"
 overview: "Scrape poster images from Fanart"
@@ -11,9 +11,5 @@ owner: "jellyfin"
 artifacts:
   - "Jellyfin.Plugin.Fanart.dll"
 changelog: |-
-  - Use file scoped namespaces and add analyzers (#72) @Shadowghost
-  - Revert "Update dependency Microsoft.Extensions.Http to v10" (#73) @Shadowghost
-
-  ### Dependency updates ###
-  - Update dependency Microsoft.Extensions.Http to 9.0.11 (#68) @[renovate[bot]](https://github.com/apps/renovate)
-  - Update dependency Microsoft.Extensions.Http to v10 (#69) @[renovate[bot]](https://github.com/apps/renovate)
+  - Unstable: Update to latest Jellyfin preview packages (#78) @crobibero, @enter-a-random-username, @jellyfin-bot
+  - Use preview  image for faster loading times (#81) @enter-a-random-username, @crobibero
