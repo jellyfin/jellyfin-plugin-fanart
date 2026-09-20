@@ -43,7 +43,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     }
 
     /// <inheritdoc />
-    public override string Name => "Fanart";
+    public override string Name => Constants.PluginName;
 
     /// <inheritdoc />
     public override Guid Id => _id;
