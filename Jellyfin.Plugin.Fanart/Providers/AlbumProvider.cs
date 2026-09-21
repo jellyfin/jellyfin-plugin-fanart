@@ -1,57 +1,46 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Extensions.Json;
-using Jellyfin.Plugin.Fanart.Configuration;
 using Jellyfin.Plugin.Fanart.Dtos;
-using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
-using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Providers;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Fanart.Providers;
 
 /// <summary>
 /// Album image provider for Fanart.tv.
 /// </summary>
-public class AlbumProvider : IRemoteImageProvider, IHasOrder
+public sealed class AlbumProvider : FanartProvider
 {
-    private readonly IServerConfigurationManager _config;
-    private readonly IHttpClientFactory _httpClientFactory;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="AlbumProvider"/> class.
     /// </summary>
     /// <param name="config">The server configuration manager.</param>
     /// <param name="httpClientFactory">The HTTP client factory.</param>
-    public AlbumProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory)
+    /// <param name="fileSystem">The file system.</param>
+    /// <param name="logger">The logger.</param>
+    public AlbumProvider(IServerConfigurationManager config, IHttpClientFactory httpClientFactory, IFileSystem fileSystem, ILogger<AlbumProvider> logger)
+        : base(config, httpClientFactory, fileSystem, logger)
     {
-        _config = config;
-        _httpClientFactory = httpClientFactory;
     }
 
     /// <inheritdoc />
-    public string Name => "Fanart";
+    public override int Order => 1; // After embedded provider
 
     /// <inheritdoc />
-    public int Order => 1; // After embedded provider
-
-    /// <inheritdoc />
-    public bool Supports(BaseItem item)
+    public override bool Supports(BaseItem item)
         => item is MusicAlbum;
 
     /// <inheritdoc />
-    public IEnumerable<ImageType> GetSupportedImages(BaseItem item)
+    public override IEnumerable<ImageType> GetSupportedImages(BaseItem item)
     {
         return
         [
@@ -61,73 +50,26 @@ public class AlbumProvider : IRemoteImageProvider, IHasOrder
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
+    public override async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
     {
         var album = (MusicAlbum)item;
-
         var list = new List<RemoteImageInfo>();
-
         var musicBrainzAlbumArtist = album.GetProviderId(MetadataProvider.MusicBrainzAlbumArtist);
 
-        if (musicBrainzAlbumArtist == null)
+        if (string.IsNullOrEmpty(musicBrainzAlbumArtist))
         {
             return list;
         }
 
-        if (!string.IsNullOrEmpty(musicBrainzAlbumArtist))
-        {
-            await ArtistProvider.Current.EnsureArtistJson(musicBrainzAlbumArtist, cancellationToken).ConfigureAwait(false);
+        await ArtistProvider.Current.EnsureArtistJson(musicBrainzAlbumArtist, cancellationToken).ConfigureAwait(false);
 
-            var artistJsonPath = ArtistProvider.GetArtistJsonPath(_config.CommonApplicationPaths, musicBrainzAlbumArtist);
+        var artistJsonPath = ArtistProvider.GetArtistJsonPath(Config.CommonApplicationPaths, musicBrainzAlbumArtist);
+        var musicBrainzReleaseGroup = album.GetProviderId(MetadataProvider.MusicBrainzReleaseGroup);
+        var musicBrainzAlbum = album.GetProviderId(MetadataProvider.MusicBrainzAlbum);
 
-            var musicBrainzReleaseGroup = album.GetProviderId(MetadataProvider.MusicBrainzReleaseGroup);
+        await AddImages(list, artistJsonPath, musicBrainzAlbum, musicBrainzReleaseGroup, cancellationToken).ConfigureAwait(false);
 
-            var musicBrainzAlbum = album.GetProviderId(MetadataProvider.MusicBrainzAlbum);
-
-            try
-            {
-                await AddImages(list, artistJsonPath, musicBrainzAlbum, musicBrainzReleaseGroup, cancellationToken).ConfigureAwait(false);
-            }
-            catch (FileNotFoundException)
-            {
-                // No biggie. Don't blow up
-            }
-            catch (IOException)
-            {
-                // No biggie. Don't blow up
-            }
-        }
-
-        var language = item.GetPreferredMetadataLanguage();
-
-        var isLanguageEn = string.Equals(language, "en", StringComparison.OrdinalIgnoreCase);
-
-        // Sort first by width to prioritize HD versions
-        return list.OrderByDescending(i => i.Width ?? 0)
-            .ThenByDescending(i =>
-            {
-                if (string.Equals(language, i.Language, StringComparison.OrdinalIgnoreCase))
-                {
-                    return 3;
-                }
-
-                if (!isLanguageEn)
-                {
-                    if (string.Equals("en", i.Language, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return 2;
-                    }
-                }
-
-                if (string.IsNullOrEmpty(i.Language))
-                {
-                    return isLanguageEn ? 3 : 2;
-                }
-
-                return 0;
-            })
-            .ThenByDescending(i => i.CommunityRating ?? 0)
-            .ThenByDescending(i => i.VoteCount ?? 0);
+        return SortImages(list, item.GetPreferredMetadataLanguage());
     }
 
     /// <summary>
@@ -140,25 +82,16 @@ public class AlbumProvider : IRemoteImageProvider, IHasOrder
     /// <param name="cancellationToken">The cancellation token.</param>
     private async Task AddImages(List<RemoteImageInfo> list, string path, string releaseId, string releaseGroupId, CancellationToken cancellationToken)
     {
-        Stream fileStream = File.OpenRead(path);
-        var obj = await JsonSerializer.DeserializeAsync<ArtistResponse>(fileStream, JsonDefaults.Options, cancellationToken).ConfigureAwait(false);
-
-        if (obj.Albums != null)
+        var artist = await TryLoad<ArtistResponse>(path, cancellationToken).ConfigureAwait(false);
+        if (artist == null)
         {
-            var album = obj.Albums.FirstOrDefault(i => string.Equals(i.ReleaseGroupId, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.ReleaseGroupId, releaseGroupId, StringComparison.OrdinalIgnoreCase));
-            var albumCovers = album?.AlbumCovers;
-            var cdArts = album?.CdArts;
-
-            if (albumCovers != null)
-            {
-                PopulateImages(list, albumCovers, ImageType.Primary, 1000, 1000);
-            }
-
-            if (cdArts != null)
-            {
-                PopulateImages(list, cdArts, ImageType.Disc, 1000, 1000);
-            }
+            return;
         }
+
+        var album = artist?.Albums?.FirstOrDefault(i => string.Equals(i.ReleaseGroupId, releaseId, StringComparison.OrdinalIgnoreCase) || string.Equals(i.ReleaseGroupId, releaseGroupId, StringComparison.OrdinalIgnoreCase));
+
+        PopulateImages(list, album?.AlbumCovers, ImageType.Primary, 1000, 1000);
+        PopulateImages(list, album?.CdArts, ImageType.Disc, 1000, 1000);
     }
 
     private void PopulateImages(
@@ -173,63 +106,8 @@ public class AlbumProvider : IRemoteImageProvider, IHasOrder
             return;
         }
 
-        list.AddRange(images.Select(i =>
-        {
-            var url = i.Url;
-
-            if (!string.IsNullOrEmpty(url))
-            {
-                var likesString = i.Likes;
-                /* Disabled until returned values are reliable
-                if (DateTime.TryParse(i.Added, out var added) && added > Constants.WorkingThumbImageDimensions)
-                {
-                    if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedWidth))
-                    {
-                        width = parsedWidth;
-                    }
-
-                    if (int.TryParse(i.Width, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedHeight))
-                    {
-                        height = parsedWidth;
-                    }
-                }
-                */
-
-                // Fanart sometimes uses 00 to denote images without language, Jellyfin expects null or an empty string
-                var language = i.Language;
-                if (string.Equals(language, "00", StringComparison.OrdinalIgnoreCase))
-                {
-                    language = null;
-                }
-
-                var info = new RemoteImageInfo
-                {
-                    RatingType = RatingType.Likes,
-                    Type = type,
-                    Width = width,
-                    Height = height,
-                    ProviderName = Name,
-                    ThumbnailUrl = url.Replace("/fanart/", "/bigpreview/", StringComparison.OrdinalIgnoreCase),
-                    Url = url,
-                    Language = language
-                };
-
-                if (!string.IsNullOrEmpty(likesString)
-                    && int.TryParse(likesString, NumberStyles.Integer, CultureInfo.InvariantCulture, out var likes))
-                {
-                    info.CommunityRating = likes;
-                }
-
-                return info;
-            }
-
-            return null;
-        }).Where(i => i != null));
-    }
-
-    /// <inheritdoc />
-    public Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
-    {
-        return _httpClientFactory.CreateClient(NamedClient.Default).GetAsync(new Uri(url), cancellationToken);
+        list.AddRange(images
+            .Select(i => CreateImageInfo(i.Url, i.Likes, i.Language, type, width, height))
+            .Where(i => i != null));
     }
 }
