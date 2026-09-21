@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,18 +63,9 @@ public sealed class SeasonProvider : FanartProvider
 
         if (!string.IsNullOrEmpty(id) && season.IndexNumber.HasValue)
         {
-            // Bad id entered
-            try
-            {
-                await SeriesProvider.Current.EnsureSeriesJson(id, cancellationToken).ConfigureAwait(false);
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                Logger.LogDebug(ex, "Fanart.tv has no data for season {Id}", id);
-            }
+            await SeriesProvider.Current.EnsureSeriesJson(id, cancellationToken).ConfigureAwait(false);
 
             var path = SeriesProvider.Current.GetJsonPath(id);
-
             await AddImages(list, season.IndexNumber.Value, path, cancellationToken).ConfigureAwait(false);
         }
 

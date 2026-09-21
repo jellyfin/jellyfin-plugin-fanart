@@ -258,7 +258,7 @@ public abstract class FanartProvider : IRemoteImageProvider, IHasOrder, IDisposa
     {
         try
         {
-            File.Delete(path);
+            FileSystem.DeleteFile(path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -46,6 +46,8 @@ internal sealed class TestEnvironment : IDisposable
             .Returns((string p) => new FileSystemMetadata { FullName = p, Exists = File.Exists(p) });
         fileSystem.Setup(f => f.GetLastWriteTimeUtc(It.IsAny<FileSystemMetadata>()))
             .Returns((FileSystemMetadata m) => File.GetLastWriteTimeUtc(m.FullName));
+        fileSystem.Setup(f => f.DeleteFile(It.IsAny<string>()))
+            .Callback((string p) => File.Delete(p));
         FileSystem = fileSystem.Object;
 
         Handler = new FakeHandler(this);

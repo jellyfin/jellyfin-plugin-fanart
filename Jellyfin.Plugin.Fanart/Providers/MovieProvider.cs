@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -65,18 +64,9 @@ public sealed class MovieProvider : FanartProvider
 
         if (!string.IsNullOrEmpty(movieId))
         {
-            // Bad id entered
-            try
-            {
-                await EnsureMovieJson(movieId, cancellationToken).ConfigureAwait(false);
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-            {
-                Logger.LogDebug(ex, "Fanart.tv has no data for movie {Id}", movieId);
-            }
+            await EnsureMovieJson(movieId, cancellationToken).ConfigureAwait(false);
 
             var path = GetJsonPath(movieId);
-
             await AddImages(list, path, cancellationToken).ConfigureAwait(false);
         }
 

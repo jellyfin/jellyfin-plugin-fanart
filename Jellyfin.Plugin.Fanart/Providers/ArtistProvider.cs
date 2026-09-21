@@ -68,7 +68,6 @@ public sealed class ArtistProvider : FanartProvider
             await EnsureArtistJson(artistMusicBrainzId, cancellationToken).ConfigureAwait(false);
 
             var artistJsonPath = GetArtistJsonPath(Config.CommonApplicationPaths, artistMusicBrainzId);
-
             await AddImages(list, artistJsonPath, cancellationToken).ConfigureAwait(false);
         }
 
