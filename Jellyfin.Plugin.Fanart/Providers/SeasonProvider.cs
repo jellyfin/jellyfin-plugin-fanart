@@ -68,7 +68,7 @@ public class SeasonProvider : IRemoteImageProvider, IHasOrder
 
         if (season != null)
         {
-            var id = season.GetProviderId(MetadataProvider.Tmdb) ?? season.GetProviderId(MetadataProvider.Tvdb);
+            var id = season.Series?.GetProviderId(MetadataProvider.Tvdb);
 
             if (!string.IsNullOrEmpty(id) && season.IndexNumber.HasValue)
             {
